@@ -42,11 +42,6 @@ slide(Board, Color, Row, Col, Dr, Dc, ToRow, ToCol) :-
     slide(Board, Color, NextRow, NextCol, Dr, Dc, ToRow, ToCol).
 
 
-% Opponent Checker
-opponent(white, P) :- is_black(P).
-opponent(black, P) :- is_white(P).
-
-
 % Legal Move Checker
 % white
 legal_move(Board, white, R, C, ToR, ToC) :-
