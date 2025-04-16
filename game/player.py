@@ -15,13 +15,13 @@ class Player:
             if (row, col) == selected:
                 return None, [], turn  # Deselect
             elif piece != 'e' and self.is_own_piece(piece):
-                return (row, col), get_legal_moves(board.grid, turn, row, col), turn
+                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move), turn
             else:
-                board.grid, new_turn, moved = move_piece(board.grid, selected, (row, col), turn)
+                board.grid, new_turn, board.last_move, moved = move_piece(board.grid, selected, (row, col), turn, board.last_move)
                 if moved:
                     return None, [], new_turn
                 return None, [], turn
         else:
             if piece != 'e' and self.is_own_piece(piece):
-                return (row, col), get_legal_moves(board.grid, turn, row, col), turn
+                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move), turn
         return selected, legal_moves, turn
