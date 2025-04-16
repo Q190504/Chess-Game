@@ -43,27 +43,29 @@ slide(Board, Color, Row, Col, Dr, Dc, ToRow, ToCol) :-
 
 
 % Legal Move Checker
+% Legal Move Checker
 % white
-legal_move(Board, white, R, C, ToR, ToC) :-
+legal_move(Board, white, R, C, ToR, ToC, LastMove) :- 
     get_piece(Board, R, C, Piece),
     (
-        Piece = 'P', pawn_move(Board, white, R, C, ToR, ToC)
-    ;   Piece = 'N', knight_move(Board, white, R, C, ToR, ToC)
-    ;   Piece = 'R', rook_move(Board, white, R, C, ToR, ToC)
-    ;   Piece = 'B', bishop_move(Board, white, R, C, ToR, ToC)
-    ;   Piece = 'Q', queen_move(Board, white, R, C, ToR, ToC)
-    ;   Piece = 'K', king_move(Board, white, R, C, ToR, ToC)
+        Piece = 'P', pawn_move(Board, white, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'N', knight_move(Board, white, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'R', rook_move(Board, white, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'B', bishop_move(Board, white, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'Q', queen_move(Board, white, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'K', king_move(Board, white, R, C, ToR, ToC, LastMove)
     ).
+
 % black
-legal_move(Board, black, R, C, ToR, ToC) :-
+legal_move(Board, black, R, C, ToR, ToC, LastMove) :- 
     get_piece(Board, R, C, Piece),
     (
-        Piece = 'p', pawn_move(Board, black, R, C, ToR, ToC)
-    ;   Piece = 'n', knight_move(Board, black, R, C, ToR, ToC)
-    ;   Piece = 'r', rook_move(Board, black, R, C, ToR, ToC)
-    ;   Piece = 'b', bishop_move(Board, black, R, C, ToR, ToC)
-    ;   Piece = 'q', queen_move(Board, black, R, C, ToR, ToC)
-    ;   Piece = 'k', king_move(Board, black, R, C, ToR, ToC)
+        Piece = 'p', pawn_move(Board, black, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'n', knight_move(Board, black, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'r', rook_move(Board, black, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'b', bishop_move(Board, black, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'q', queen_move(Board, black, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'k', king_move(Board, black, R, C, ToR, ToC, LastMove)
     ).
 
 
