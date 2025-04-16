@@ -56,3 +56,8 @@ def move_piece(board, start, end, turn, last_move=None):
             return board, next_turn, new_last_move, True
             
     return board, turn, last_move, False
+
+def is_in_check(board, turn):
+    board_str = python_board_to_prolog(board)
+    query = f"in_check({board_str}, {turn})"
+    return bool(list(prolog.query(query)))

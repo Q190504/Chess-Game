@@ -1,5 +1,6 @@
 import pygame
 import os
+from logic.prolog_interface import is_in_check
 
 # Color const
 WHITE = (240, 217, 181)
@@ -60,6 +61,21 @@ class Board:
             else:
                 highlight_surface.fill((GREEN[0], GREEN[1], GREEN[2], 100))
             screen.blit(highlight_surface, (c * SQ_SIZE, r * SQ_SIZE))
+
+        # Highlight checked squares
+        if is_in_check(self.grid, 'black'):
+            for r in range(8):
+                for c in range(8):
+                    if self.grid[r][c] == 'k':
+                        highlight_surface.fill((RED[0], RED[1], RED[2], 100))
+                        screen.blit(highlight_surface, (c * SQ_SIZE, r * SQ_SIZE))
+
+        if is_in_check(self.grid, 'white'):
+            for r in range(8):
+                for c in range(8):
+                    if self.grid[r][c] == 'K':
+                        highlight_surface.fill((RED[0], RED[1], RED[2], 100))
+                        screen.blit(highlight_surface, (c * SQ_SIZE, r * SQ_SIZE))
 
         # Highlight selected square
         if selected:
