@@ -27,18 +27,18 @@ pawn_move(Board, white, FromRow, FromCol, ToRow, ToCol) :-
 
 
 % black pawn: one step
-legal_move(Board, black, FromRow, Col, ToRow, Col) :-
+pawn_move(Board, black, FromRow, Col, ToRow, Col) :-
     ToRow is FromRow + 1,
     ToRow =< 7,
     get_piece(Board, ToRow, Col, e).
 
 % black pawn: two steps from starting row (row 1)
-legal_move(Board, black, 1, Col, 3, Col) :-
+pawn_move(Board, black, 1, Col, 3, Col) :-
     get_piece(Board, 2, Col, e),
     get_piece(Board, 3, Col, e).
 
 % black pawn: diagonal capture
-legal_move(Board, black, FromRow, FromCol, ToRow, ToCol) :-
+pawn_move(Board, black, FromRow, FromCol, ToRow, ToCol) :-
     ToRow is FromRow + 1,
     ToRow =< 7,
     (ToCol is FromCol - 1 ; ToCol is FromCol + 1),
