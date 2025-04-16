@@ -20,6 +20,7 @@ class Board:
             ['P'] * 8,
             ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
         ]
+        self.last_move = []
         self.images = self.load_images()
 
     def load_images(self):
