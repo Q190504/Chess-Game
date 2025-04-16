@@ -43,7 +43,6 @@ slide(Board, Color, Row, Col, Dr, Dc, ToRow, ToCol) :-
 
 
 % Legal Move Checker
-% Legal Move Checker
 % white
 legal_move(Board, white, R, C, ToR, ToC, LastMove) :- 
     get_piece(Board, R, C, Piece),
@@ -90,3 +89,54 @@ is_black('k').
 get_piece(Board, Row, Col, Piece) :-
     nth0(Row, Board, BoardRow),
     nth0(Col, BoardRow, Piece).
+
+
+% ------------------------------
+% Check Logic
+% Check if any opponent piece has a legal move to the king square.
+% ------------------------------
+
+% Check if king is in check
+in_check(Board, Color) :-
+    find_king(Board, Color, Row, Col),
+    under_attack(Board, Color, Row, Col).
+
+% find_king(Board, Color, Row, Col)
+find_king(Board, Color, Row, Col) :-
+    king_symbol(Color, Symbol),
+    find_king_in_rows(Board, Symbol, 0, Row, Col).
+
+% king_symbol(Color, Symbol)
+king_symbol(white, 'K').
+king_symbol(black, 'k').
+
+% find_king_in_rows(Board, Symbol, CurrentRowNum, RowNum, ColNum)
+find_king_in_rows([CurrentRow|_], Symbol, CurrentRowNum, CurrentRowNum, ColNum) :-
+    nth0(ColNum, CurrentRow, Symbol).
+
+find_king_in_rows([_|RestRows], Symbol, CurrentRowNum, RowNum, ColNum) :-
+    NextRowNum is CurrentRowNum + 1,
+    find_king_in_rows(RestRows, Symbol, NextRowNum, RowNum, ColNum).
+
+% Check if opponent can move there
+under_attack(Board, Color, TargetRow, TargetCol) :-
+    opponent_color(Color, OppColor),
+    between(0, 7, Row),
+    between(0, 7, Col),
+    nth0(Row, Board, BoardRow),
+    nth0(Col, BoardRow, Piece),
+    Piece \= e,
+    piece_color(Piece, OppColor),
+    format('Trying move from (~w,~w) ~w to king at (~w,~w)~n', [Row, Col, Piece, TargetRow, TargetCol]),
+    legal_move(Board, OppColor, Row, Col, TargetRow, TargetCol, _),
+    format('LEGAL move from ~w at (~w,~w) to (~w,~w)~n', [Piece, Row, Col, TargetRow, TargetCol]),
+    !.
+
+
+% Define opponent color
+opponent_color(white, black).
+opponent_color(black, white).
+
+% Define piece color
+piece_color(Piece, white) :- atom_chars(Piece, [C]), char_type(C, upper).
+piece_color(Piece, black) :- atom_chars(Piece, [C]), char_type(C, lower).
