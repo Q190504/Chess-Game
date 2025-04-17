@@ -67,15 +67,13 @@ class Board:
             for r in range(8):
                 for c in range(8):
                     if self.grid[r][c] == 'k':
-                        highlight_surface.fill((RED[0], RED[1], RED[2], 100))
-                        screen.blit(highlight_surface, (c * SQ_SIZE, r * SQ_SIZE))
+                        pygame.draw.rect(screen, RED, (c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE), width=4)
 
         if is_in_check(self.grid, 'white'):
             for r in range(8):
                 for c in range(8):
                     if self.grid[r][c] == 'K':
-                        highlight_surface.fill((RED[0], RED[1], RED[2], 100))
-                        screen.blit(highlight_surface, (c * SQ_SIZE, r * SQ_SIZE))
+                        pygame.draw.rect(screen, RED, (c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE), width=4)
 
         # Highlight selected square
         if selected:
