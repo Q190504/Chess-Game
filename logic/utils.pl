@@ -5,6 +5,22 @@
 % Checks if a square is empty
 is_empty(e).
 
+% White pieces
+is_white('P').
+is_white('R').
+is_white('N').
+is_white('B').
+is_white('Q').
+is_white('K').
+
+% Black pieces 
+is_black('p').
+is_black('r').
+is_black('n').
+is_black('b').
+is_black('q').
+is_black('k').
+
 % Check that a square is on the 8x8 board
 exist_sqr(Row, Col) :-
     Row >= 0, Row =< 7,
@@ -41,31 +57,14 @@ slide(Board, Color, Row, Col, Dr, Dc, ToRow, ToCol) :-
     Target = e,
     slide(Board, Color, NextRow, NextCol, Dr, Dc, ToRow, ToCol).
 
-% Safe Move Checker: A move is considered safe if it is a legal move and not put the king of it side on check
-safe_move(Board, Color, R, C, ToR, ToC, LastMove) :-
-    legal_move(Board, Color, R, C, ToR, ToC, LastMove),
-    simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard),
-    \+ in_check(NewBoard, Color).
-
-% Simulate and Check: perform the move on the current board to check if it put the king in check, 
-% copy the new state to the new board for later on Minimax
-simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard) :-
-    get_piece(Board, R, C, Piece),
-    Piece \= e,
-
-    % Check and remove for en passant move, castling move
-    (
-        en_passant(Board, Color, R, C, ToR, ToC, LastMove) ->
-            (
-                (Color = white -> CapR is ToR + 1 ; CapR is ToR - 1),
-                set_piece(Board, CapR, ToC, e, TempBoard1), % Clear captured pawn
-                set_piece(TempBoard1, R, C, e, TempBoard2) % Old Pos to empty
-            )
-        ;
-        set_piece(Board, R, C, e, TempBoard2) % Old Pos to empty
-    ),
-
-    set_piece(TempBoard2, ToR, ToC, Piece, NewBoard). % New Pos to piece
+% ------------------------------
+% Board manipulation logic
+% Get, set piece
+% ------------------------------
+% Gets a piece at (Row, Col) from the Board
+get_piece(Board, Row, Col, Piece) :-
+    nth0(Row, Board, BoardRow),
+    nth0(Col, BoardRow, Piece).
 
 % Set new piece in its new pos
 set_piece(Board, R, C, Piece, NewBoard) :-
@@ -84,7 +83,10 @@ replace_in_list(List, Index, Elem, NewList) :-
     length(Prefix, Index),
     append(Prefix, [Elem|Suffix], NewList).
 
-% Legal Move Checker
+% ------------------------------
+% Legal Move Logic
+% A move is considered legal if it is following the move rule of the piece
+% ------------------------------
 % white
 legal_move(Board, white, R, C, ToR, ToC, LastMove) :- 
     get_piece(Board, R, C, Piece),
@@ -109,29 +111,33 @@ legal_move(Board, black, R, C, ToR, ToC, LastMove) :-
     ;   Piece = 'k', king_move(Board, black, R, C, ToR, ToC, LastMove)
     ).
 
+% ------------------------------
+% Safe Move Logic
+% A move is considered safe if it is a legal move and not put the king of it side on check
+% ------------------------------
 
-% White pieces
-is_white('P').
-is_white('R').
-is_white('N').
-is_white('B').
-is_white('Q').
-is_white('K').
+safe_move(Board, Color, R, C, ToR, ToC, LastMove) :-
+    legal_move(Board, Color, R, C, ToR, ToC, LastMove),
+    simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard), % Perform the move on the current board 
+    \+ in_check(NewBoard, Color). % Check if it put the king in check
 
-% Black pieces 
-is_black('p').
-is_black('r').
-is_black('n').
-is_black('b').
-is_black('q').
-is_black('k').
+% Simulate move: perform the move on the current board
+simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard) :-
+    get_piece(Board, R, C, Piece),
+    Piece \= e,
 
-
-% Gets a piece at (Row, Col) from the Board
-get_piece(Board, Row, Col, Piece) :-
-    nth0(Row, Board, BoardRow),
-    nth0(Col, BoardRow, Piece).
-
+    % Check and remove for en passant move, castling move
+    (
+        en_passant(Board, Color, R, C, ToR, ToC, LastMove) ->
+            (
+                (Color = white -> CapR is ToR + 1 ; CapR is ToR - 1),
+                set_piece(Board, CapR, ToC, e, TempBoard1), % Clear captured pawn
+                set_piece(TempBoard1, R, C, e, TempBoard2) % Old Pos to empty
+            )
+        ;
+        set_piece(Board, R, C, e, TempBoard2) % Old Pos to empty
+    ),
+    set_piece(TempBoard2, ToR, ToC, Piece, NewBoard). % New Pos to piece
 
 % ------------------------------
 % Check Logic
