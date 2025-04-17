@@ -41,6 +41,48 @@ slide(Board, Color, Row, Col, Dr, Dc, ToRow, ToCol) :-
     Target = e,
     slide(Board, Color, NextRow, NextCol, Dr, Dc, ToRow, ToCol).
 
+% Safe Move Checker: A move is considered safe if it is a legal move and not put the king of it side on check
+safe_move(Board, Color, R, C, ToR, ToC, LastMove) :-
+    legal_move(Board, Color, R, C, ToR, ToC, LastMove),
+    simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard),
+    \+ in_check(NewBoard, Color).
+
+% Simulate and Check: perform the move on the current board to check if it put the king in check, 
+% copy the new state to the new board for later on Minimax
+simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard) :-
+    get_piece(Board, R, C, Piece),
+    Piece \= e,
+
+    % Check and remove for en passant move, castling move
+    (
+        en_passant(Board, Color, R, C, ToR, ToC, LastMove) ->
+            (
+                (Color = white -> CapR is ToR + 1 ; CapR is ToR - 1),
+                set_piece(Board, CapR, ToC, e, TempBoard1), % Clear captured pawn
+                set_piece(TempBoard1, R, C, e, TempBoard2) % Old Pos to empty
+            )
+        ;
+        set_piece(Board, R, C, e, TempBoard2) % Old Pos to empty
+    ),
+
+    set_piece(TempBoard2, ToR, ToC, Piece, NewBoard). % New Pos to piece
+
+% Set new piece in its new pos
+set_piece(Board, R, C, Piece, NewBoard) :-
+    replace_in_matrix(Board, R, C, Piece, NewBoard).
+
+% Replace a member of a matrix
+replace_in_matrix(Matrix, RowIndex, ColIndex, Elem, NewMatrix) :-
+    nth0(RowIndex, Matrix, OldRow),
+    replace_in_list(OldRow, ColIndex, Elem, NewRow),
+    replace_in_list(Matrix, RowIndex, NewRow, NewMatrix).
+
+% Replace a member of a list
+replace_in_list(List, Index, Elem, NewList) :-
+    same_length(List, NewList),
+    append(Prefix, [_|Suffix], List),
+    length(Prefix, Index),
+    append(Prefix, [Elem|Suffix], NewList).
 
 % Legal Move Checker
 % white
@@ -127,9 +169,9 @@ under_attack(Board, Color, TargetRow, TargetCol) :-
     nth0(Col, BoardRow, Piece),
     Piece \= e,
     piece_color(Piece, OppColor),
-    format('Trying move from (~w,~w) ~w to king at (~w,~w)~n', [Row, Col, Piece, TargetRow, TargetCol]),
+    % format('Trying move from (~w,~w) ~w to king at (~w,~w)~n', [Row, Col, Piece, TargetRow, TargetCol]),
     legal_move(Board, OppColor, Row, Col, TargetRow, TargetCol, _),
-    format('LEGAL move from ~w at (~w,~w) to (~w,~w)~n', [Piece, Row, Col, TargetRow, TargetCol]),
+    % format('LEGAL move from ~w at (~w,~w) to (~w,~w)~n', [Piece, Row, Col, TargetRow, TargetCol]),
     !.
 
 

@@ -70,6 +70,7 @@ pawn_move(Board, black, FromRow, FromCol, ToRow, ToCol, LastMove) :-
 
 % White
 en_passant(Board, white, FromRow, FromCol, ToRow, ToCol, LastMove) :-
+    get_piece(Board, FromRow, FromCol, 'P'),  % source must be a white pawn
     FromRow = 3,  % white pawn must be on 3rd rank
     ToRow = 2,
     (ToCol is FromCol - 1 ; ToCol is FromCol + 1),
@@ -78,6 +79,7 @@ en_passant(Board, white, FromRow, FromCol, ToRow, ToCol, LastMove) :-
 
 % Black
 en_passant(Board, black, FromRow, FromCol, ToRow, ToCol, LastMove) :-
+    get_piece(Board, FromRow, FromCol, 'p'),  % source must be a white pawn
     FromRow = 4,  % black pawn must be on 4th rank
     ToRow = 5,
     (ToCol is FromCol - 1 ; ToCol is FromCol + 1),

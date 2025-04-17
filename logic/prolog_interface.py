@@ -33,15 +33,12 @@ def move_piece(board, start, end, turn, last_move=None):
         else:
             move_term = "none"
         
-        query = f"legal_move({board_str}, {turn}, {sr}, {sc}, {er}, {ec}, {move_term})"
+        query = f"safe_move({board_str}, {turn}, {sr}, {sc}, {er}, {ec}, {move_term})"
         if list(prolog.query(query)):
             is_en_passant = False
-            if piece.lower() == 'p' and board[er][ec] == 'e':
-                # Only pawns moving to an empty square diagonally can be en passant
-                if sc != ec:
-                    en_passant_query = f"en_passant({board_str}, {turn}, {sr}, {sc}, {er}, {ec}, {move_term})"
-                    is_en_passant = bool(list(prolog.query(en_passant_query)))
-
+            en_passant_query = f"en_passant({board_str}, {turn}, {sr}, {sc}, {er}, {ec}, {move_term})"
+            is_en_passant = bool(list(prolog.query(en_passant_query)))
+            
             board[er][ec] = piece
             board[sr][sc] = 'e'
             if is_en_passant:
