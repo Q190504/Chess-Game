@@ -1,4 +1,4 @@
-from logic.prolog_interface import get_legal_moves, move_piece
+from logic.prolog_interface import get_legal_moves, move_piece, is_checkmate, is_stalemate
 
 class Player:
     def __init__(self, color):
@@ -19,6 +19,10 @@ class Player:
             else:
                 board.grid, new_turn, board.last_move, moved = move_piece(board.grid, selected, (row, col), turn, board.last_move)
                 if moved:
+                    if is_checkmate(board.grid, new_turn, board.last_move):
+                        print(f"Checkmate! {turn.capitalize()} wins.")
+                    elif is_stalemate(board.grid, new_turn, board.last_move):
+                        print("Stalemate! It's a draw.")
                     return None, [], new_turn
                 return None, [], turn
         else:

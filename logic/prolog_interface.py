@@ -58,3 +58,13 @@ def is_in_check(board, turn):
     board_str = python_board_to_prolog(board)
     query = f"in_check({board_str}, {turn})"
     return bool(list(prolog.query(query)))
+
+def is_checkmate(board, turn, last_move):
+    board_str = python_board_to_prolog(board)
+    query = f"checkmate({board_str}, {turn}, {last_move})"
+    return bool(list(prolog.query(query)))
+
+def is_stalemate(board, turn, last_move):
+    board_str = python_board_to_prolog(board)
+    query = f"stalemate({board_str}, {turn}, {last_move})"
+    return bool(list(prolog.query(query)))

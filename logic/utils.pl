@@ -188,3 +188,33 @@ opponent_color(black, white).
 % Define piece color
 piece_color(Piece, white) :- atom_chars(Piece, [C]), char_type(C, upper).
 piece_color(Piece, black) :- atom_chars(Piece, [C]), char_type(C, lower).
+
+
+% ------------------------------
+% Checkmate Logic
+% Check if the king is in check and has no safe moves to escape.
+% ------------------------------
+
+checkmate(Board, Color, LastMove) :-
+    in_check(Board, Color),
+    \+ has_safe_move(Board, Color, LastMove).
+
+% True if there is at least one legal move that is also safe (i.e., doesnt leave king in check)
+has_safe_move(Board, Color, LastMove) :-
+    member(R, [0,1,2,3,4,5,6,7]),
+    member(C, [0,1,2,3,4,5,6,7]),
+    get_piece(Board, R, C, Piece),
+    piece_color(Piece, Color),
+    member(ToR, [0,1,2,3,4,5,6,7]),
+    member(ToC, [0,1,2,3,4,5,6,7]),
+    safe_move(Board, Color, R, C, ToR, ToC, LastMove),
+    !.  % Cut: we only need one
+
+
+% ------------------------------
+% Stalemate Logic
+% Check if the king is not in check and has no legal moves to escape.
+% ------------------------------
+stalemate(Board, Color, LastMove) :-
+    \+ in_check(Board, Color),
+    \+ has_safe_move(Board, Color, LastMove).
