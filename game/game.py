@@ -1,6 +1,7 @@
 import pygame
 from game.board import Board
 from game.player import Player
+from logic.prolog_interface import get_minimax_move
 
 WIDTH, HEIGHT = 640, 640
 
@@ -55,5 +56,7 @@ class Game:
                     self.selected, self.legal_moves, self.turn = player.handle_click(
                         self.board, self.selected, row, col, self.turn
                     )
+                    if (self.turn == 'black'):
+                        get_minimax_move(self.board.grid, self.turn, 3, self.board.last_move, self.board.rights)
 
         pygame.quit()

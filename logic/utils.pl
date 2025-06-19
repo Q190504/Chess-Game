@@ -164,6 +164,72 @@ simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard) :-
     ),
     set_piece(TempBoard2, ToR, ToC, Piece, NewBoard). % New Pos to piece
 
+% Add a promotion Simulate for minimax
+% simulate_move/11: With optional promotion and castling right update (used in minimax)
+simulate_move(Board, Color, R, C, ToR, ToC, LastMove, PromoPiece, CastleIn, CastleOut, NewBoard) :-
+    get_piece(Board, R, C, Piece),
+    Piece \= e,
+
+    (
+        % En passant
+        en_passant(Board, Color, R, C, ToR, ToC, LastMove) ->
+            (Color = white -> CapR is ToR + 1 ; CapR is ToR - 1),
+            set_piece(Board, CapR, ToC, e, T1),
+            set_piece(T1, R, C, e, T2)
+
+        % Castling (White & Black)
+    ;   Piece = 'K', Color = white, R = 7, C = 4, (
+            (ToC = 6 -> set_piece(Board, 7, 4, e, T1), set_piece(T1, 7, 7, e, T2), set_piece(T2, 7, 6, 'K', T3), set_piece(T3, 7, 5, 'R', T2));
+            (ToC = 2 -> set_piece(Board, 7, 4, e, T1), set_piece(T1, 7, 0, e, T2), set_piece(T2, 7, 2, 'K', T3), set_piece(T3, 7, 3, 'R', T2))
+        )
+    ;   Piece = 'k', Color = black, R = 0, C = 4, (
+            (ToC = 6 -> set_piece(Board, 0, 4, e, T1), set_piece(T1, 0, 7, e, T2), set_piece(T2, 0, 6, 'k', T3), set_piece(T3, 0, 5, 'r', T2));
+            (ToC = 2 -> set_piece(Board, 0, 4, e, T1), set_piece(T1, 0, 0, e, T2), set_piece(T2, 0, 2, 'k', T3), set_piece(T3, 0, 3, 'r', T2))
+        )
+
+        % Normal move
+    ;   set_piece(Board, R, C, e, T2)
+    ),
+
+    (
+        % Promotion
+        PromoPiece \= none,
+        ((Piece = 'P', Color = white, ToR = 0) ; (Piece = 'p', Color = black, ToR = 7)) ->
+            set_piece(T2, ToR, ToC, PromoPiece, FinalBoard)
+    ;
+        set_piece(T2, ToR, ToC, Piece, FinalBoard)
+    ),
+
+    % Update castling rights
+    update_castle_rights(Piece, R, C, CastleIn, CastleOut),
+
+    NewBoard = FinalBoard.
+
+% update_castle_rights(+Piece, +FromR, +FromC, +CastleIn, -CastleOut)
+update_castle_rights(Piece, R, C, castle_rights(WK, WQ, BK, BQ), castle_rights(NWK, NWQ, NBK, NBQ)) :-
+    (
+        (Piece = 'K') ->  % White king moved
+            NWK = false, NWQ = false, NBK = BK, NBQ = BQ
+    ;   (Piece = 'k') ->  % Black king moved
+            NBK = false, NBQ = false, NWK = WK, NWQ = WQ
+
+        % White rook moved from a1 or h1
+    ;   (Piece = 'R', R = 7, C = 0) ->  % queenside
+            NWQ = false, NWK = WK, NBK = BK, NBQ = BQ
+    ;   (Piece = 'R', R = 7, C = 7) ->  % kingside
+            NWK = false, NWQ = WQ, NBK = BK, NBQ = BQ
+
+        % Black rook moved from a8 or h8
+    ;   (Piece = 'r', R = 0, C = 0) ->
+            NBQ = false, NBK = BK, NWK = WK, NWQ = WQ
+    ;   (Piece = 'r', R = 0, C = 7) ->
+            NBK = false, NBQ = BQ, NWK = WK, NWQ = WQ
+
+    ;   % Other pieces
+        NWK = WK, NWQ = WQ, NBK = BK, NBQ = BQ
+    ).
+
+
 % ------------------------------
 % Check Logic
 % Check if any opponent piece has a legal move to the king square.
