@@ -12,15 +12,21 @@ SQ_SIZE = 80
 class Board:
     def __init__(self):
         self.grid = [
-            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+            ['r', 'e', 'e', 'e', 'k', 'e', 'e', 'r'],
             ['p'] * 8,
             ['e'] * 8,
             ['e'] * 8,
             ['e'] * 8,
             ['e'] * 8,
             ['P'] * 8,
-            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+            ['R', 'e', 'e', 'e', 'K', 'e', 'e', 'R']
         ]
+        self.rights = {
+            "white_kingside": True,
+            "white_queenside": True,
+            "black_kingside": True,
+            "black_queenside": True
+        }
         self.last_move = []
         self.images = self.load_images()
 

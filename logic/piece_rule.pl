@@ -161,10 +161,53 @@ king_offset(1, 1). king_offset(1, -1).
 king_offset(-1, 1). king_offset(-1, -1).
 
 % King Move Logic
-king_move(Board, Color, FromRow, FromCol, ToRow, ToCol, _LastMove) :-
+king_move(Board, Color, FromRow, FromCol, ToRow, ToCol, _LastMove, _CastleRights) :-
     king_offset(Dr, Dc),
     ToRow is FromRow + Dr,
     ToCol is FromCol + Dc,
     exist_sqr(ToRow, ToCol),
     get_piece(Board, ToRow, ToCol, Target),
     (Target = e ; opponent(Color, Target)).
+
+% Castling move
+king_move(Board, Color, FromRow, FromCol, ToRow, ToCol, _LastMove, CastleRights) :-
+    king_castle_move(Board, Color, FromRow, FromCol, ToRow, ToCol, CastleRights).
+
+% Check for castling: Neither king/ rook moved before, no square is in check between them, no square is occupied between them
+% king_castle_move(+Board, +Color, +FromRow, +FromCol, -ToRow, -ToCol, +CastleRights)
+
+king_castle_move(Board, white, 7, 4, 7, 6, CastleRights) :-  % White kingside
+    CastleRights = castle_rights(true,_,_,_),
+    get_piece(Board, 7, 5, e),
+    get_piece(Board, 7, 6, e),
+    \+ under_attack(Board, white, 7, 4),  % King is not in check
+    \+ under_attack(Board, white, 7, 5),
+    \+ under_attack(Board, white, 7, 6).
+
+king_castle_move(Board, white, 7, 4, 7, 2, CastleRights) :-  % White queenside
+    CastleRights = castle_rights(_,true,_,_),
+    get_piece(Board, 7, 1, e),
+    get_piece(Board, 7, 2, e),
+    get_piece(Board, 7, 3, e),
+    \+ under_attack(Board, white, 7, 4),
+    \+ under_attack(Board, white, 7, 3),
+    \+ under_attack(Board, white, 7, 2).
+
+king_castle_move(Board, black, 0, 4, 0, 6, CastleRights) :-  % Black kingside
+    CastleRights = castle_rights(_,_,true,_),
+    get_piece(Board, 0, 5, e),
+    get_piece(Board, 0, 6, e),
+    \+ under_attack(Board, black, 0, 4),
+    \+ under_attack(Board, black, 0, 5),
+    \+ under_attack(Board, black, 0, 6).
+
+king_castle_move(Board, black, 0, 4, 0, 2, CastleRights) :-  % Black queenside
+    CastleRights = castle_rights(_,_,_,true),
+    get_piece(Board, 0, 1, e),
+    get_piece(Board, 0, 2, e),
+    get_piece(Board, 0, 3, e),
+    \+ under_attack(Board, black, 0, 4),
+    \+ under_attack(Board, black, 0, 3),
+    \+ under_attack(Board, black, 0, 2).
+
+

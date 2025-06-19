@@ -88,7 +88,7 @@ replace_in_list(List, Index, Elem, NewList) :-
 % A move is considered legal if it is following the move rule of the piece
 % ------------------------------
 % white
-legal_move(Board, white, R, C, ToR, ToC, LastMove) :- 
+legal_move(Board, white, R, C, ToR, ToC, LastMove, CastleRights) :- 
     get_piece(Board, R, C, Piece),
     (
         Piece = 'P', pawn_move(Board, white, R, C, ToR, ToC, LastMove)
@@ -96,11 +96,11 @@ legal_move(Board, white, R, C, ToR, ToC, LastMove) :-
     ;   Piece = 'R', rook_move(Board, white, R, C, ToR, ToC, LastMove)
     ;   Piece = 'B', bishop_move(Board, white, R, C, ToR, ToC, LastMove)
     ;   Piece = 'Q', queen_move(Board, white, R, C, ToR, ToC, LastMove)
-    ;   Piece = 'K', king_move(Board, white, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'K', king_move(Board, white, R, C, ToR, ToC, LastMove, CastleRights)
     ).
 
 % black
-legal_move(Board, black, R, C, ToR, ToC, LastMove) :- 
+legal_move(Board, black, R, C, ToR, ToC, LastMove, CastleRights) :- 
     get_piece(Board, R, C, Piece),
     (
         Piece = 'p', pawn_move(Board, black, R, C, ToR, ToC, LastMove)
@@ -108,7 +108,7 @@ legal_move(Board, black, R, C, ToR, ToC, LastMove) :-
     ;   Piece = 'r', rook_move(Board, black, R, C, ToR, ToC, LastMove)
     ;   Piece = 'b', bishop_move(Board, black, R, C, ToR, ToC, LastMove)
     ;   Piece = 'q', queen_move(Board, black, R, C, ToR, ToC, LastMove)
-    ;   Piece = 'k', king_move(Board, black, R, C, ToR, ToC, LastMove)
+    ;   Piece = 'k', king_move(Board, black, R, C, ToR, ToC, LastMove, CastleRights)
     ).
 
 % ------------------------------
@@ -116,8 +116,8 @@ legal_move(Board, black, R, C, ToR, ToC, LastMove) :-
 % A move is considered safe if it is a legal move and not put the king of it side on check
 % ------------------------------
 
-safe_move(Board, Color, R, C, ToR, ToC, LastMove) :-
-    legal_move(Board, Color, R, C, ToR, ToC, LastMove),
+safe_move(Board, Color, R, C, ToR, ToC, LastMove, CastleRights) :-
+    legal_move(Board, Color, R, C, ToR, ToC, LastMove, CastleRights),
     simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard), % Perform the move on the current board 
     \+ in_check(NewBoard, Color). % Check if it put the king in check
 
@@ -134,8 +134,33 @@ simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard) :-
                 set_piece(Board, CapR, ToC, e, TempBoard1), % Clear captured pawn
                 set_piece(TempBoard1, R, C, e, TempBoard2) % Old Pos to empty
             )
-        ;
-        set_piece(Board, R, C, e, TempBoard2) % Old Pos to empty
+        % Castling kingside
+    ;   Piece = 'K', Color = white, R = 7, C = 4, ToR = 7, ToC = 6 ->
+            set_piece(Board, 7, 4, e, T1),
+            set_piece(T1, 7, 7, e, T2),           % clear rook
+            set_piece(T2, 7, 6, 'K', T3),
+            set_piece(T3, 7, 5, 'R', TempBoard2)  % move rook
+
+    ;   Piece = 'K', Color = white, R = 7, C = 4, ToR = 7, ToC = 2 ->
+            set_piece(Board, 7, 4, e, T1),
+            set_piece(T1, 7, 0, e, T2),           % clear rook
+            set_piece(T2, 7, 2, 'K', T3),
+            set_piece(T3, 7, 3, 'R', TempBoard2)
+
+    ;   Piece = 'k', Color = black, R = 0, C = 4, ToR = 0, ToC = 6 ->
+            set_piece(Board, 0, 4, e, T1),
+            set_piece(T1, 0, 7, e, T2),
+            set_piece(T2, 0, 6, 'k', T3),
+            set_piece(T3, 0, 5, 'r', TempBoard2)
+
+    ;   Piece = 'k', Color = black, R = 0, C = 4, ToR = 0, ToC = 2 ->
+            set_piece(Board, 0, 4, e, T1),
+            set_piece(T1, 0, 0, e, T2),
+            set_piece(T2, 0, 2, 'k', T3),
+            set_piece(T3, 0, 3, 'r', TempBoard2)
+
+        % Normal move
+    ;   set_piece(Board, R, C, e, TempBoard2)
     ),
     set_piece(TempBoard2, ToR, ToC, Piece, NewBoard). % New Pos to piece
 
@@ -176,7 +201,7 @@ under_attack(Board, Color, TargetRow, TargetCol) :-
     Piece \= e,
     piece_color(Piece, OppColor),
     % format('Trying move from (~w,~w) ~w to king at (~w,~w)~n', [Row, Col, Piece, TargetRow, TargetCol]),
-    legal_move(Board, OppColor, Row, Col, TargetRow, TargetCol, _),
+    legal_move(Board, OppColor, Row, Col, TargetRow, TargetCol, _, _),
     % format('LEGAL move from ~w at (~w,~w) to (~w,~w)~n', [Piece, Row, Col, TargetRow, TargetCol]),
     !.
 
@@ -195,19 +220,19 @@ piece_color(Piece, black) :- atom_chars(Piece, [C]), char_type(C, lower).
 % Check if the king is in check and has no safe moves to escape.
 % ------------------------------
 
-checkmate(Board, Color, LastMove) :-
+checkmate(Board, Color, LastMove, CastleRights) :-
     in_check(Board, Color),
-    \+ has_safe_move(Board, Color, LastMove).
+    \+ has_safe_move(Board, Color, LastMove, CastleRights).
 
 % True if there is at least one legal move that is also safe (i.e., doesnt leave king in check)
-has_safe_move(Board, Color, LastMove) :-
+has_safe_move(Board, Color, LastMove, CastleRights) :-
     member(R, [0,1,2,3,4,5,6,7]),
     member(C, [0,1,2,3,4,5,6,7]),
     get_piece(Board, R, C, Piece),
     piece_color(Piece, Color),
     member(ToR, [0,1,2,3,4,5,6,7]),
     member(ToC, [0,1,2,3,4,5,6,7]),
-    safe_move(Board, Color, R, C, ToR, ToC, LastMove),
+    safe_move(Board, Color, R, C, ToR, ToC, LastMove, CastleRights),
     !.  % Cut: we only need one
 
 
@@ -215,6 +240,6 @@ has_safe_move(Board, Color, LastMove) :-
 % Stalemate Logic
 % Check if the king is not in check and has no legal moves to escape.
 % ------------------------------
-stalemate(Board, Color, LastMove) :-
+stalemate(Board, Color, LastMove, CastleRights) :-
     \+ in_check(Board, Color),
-    \+ has_safe_move(Board, Color, LastMove).
+    \+ has_safe_move(Board, Color, LastMove, CastleRights).

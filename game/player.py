@@ -15,17 +15,17 @@ class Player:
             if (row, col) == selected:
                 return None, [], turn  # Deselect
             elif piece != 'e' and self.is_own_piece(piece):
-                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move), turn
+                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move, board.rights), turn
             else:
-                board.grid, new_turn, board.last_move, moved = move_piece(board.grid, selected, (row, col), turn, board.last_move)
+                board.grid, new_turn, board.last_move, board.rights, moved = move_piece(board.grid, selected, (row, col), turn, board.last_move, board.rights)
                 if moved:
-                    if is_checkmate(board.grid, new_turn, board.last_move):
+                    if is_checkmate(board.grid, new_turn, board.last_move, board.rights):
                         print(f"Checkmate! {turn.capitalize()} wins.")
-                    elif is_stalemate(board.grid, new_turn, board.last_move):
+                    elif is_stalemate(board.grid, new_turn, board.last_move, board.rights):
                         print("Stalemate! It's a draw.")
                     return None, [], new_turn
                 return None, [], turn
         else:
             if piece != 'e' and self.is_own_piece(piece):
-                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move), turn
+                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move, board.rights), turn
         return selected, legal_moves, turn
