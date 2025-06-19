@@ -70,6 +70,37 @@ minimax(Board, Color, Depth, LastMove, CastleRights, BestMove, Value) :-
 %------------------------
 % Minimax with pruning
 %------------------------
+find_pieces(Board, Color, Pieces) :-
+    findall((R, C, Piece),
+        (
+            nth0(R, Board, Row),
+            nth0(C, Row, Piece),
+            piece_belongs_to_color(Piece, Color)
+        ),
+    Pieces).
+
+generate_all_moves(Board, Color, LastMove, CastleRights, Moves) :-
+    find_pieces(Board, Color, MyPieces),
+    findall(
+        move(FromR, FromC, ToR, ToC, Promo),
+        (
+            member((FromR, FromC, Piece), MyPieces),
+            between(0, 7, ToR), between(0, 7, ToC),
+            legal_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, CastleRights),
+            generate_promotion(Piece, Color, ToR, Promo),
+            simulate_and_validate(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, CastleRights, _NewCastle, SimBoard),
+            \+ in_check(SimBoard, Color)
+        ),
+        Moves
+    ).
+
+generate_promotion('P', white, 0, Promo) :- member(Promo, ['Q','R','B','N']).
+generate_promotion('p', black, 7, Promo) :- member(Promo, ['q','r','b','n']).
+generate_promotion(_, _, _, none).
+
+simulate_and_validate(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, CastleRights, NewCastle, SimBoard) :-
+    simulate_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, CastleRights, NewCastle, SimBoard).
+
 negamax_search(Board, Color, Depth, LastMove, CastleRights, Alpha, Beta, BestMove, BestValue) :-
     (Depth =< 0 ->
         evaluate(Board, Color, Value),
@@ -77,28 +108,7 @@ negamax_search(Board, Color, Depth, LastMove, CastleRights, Alpha, Beta, BestMov
         BestValue = Value,
         log("Depth limit. Eval: ~w~n", [Value])
     ;
-        findall(
-            move(FromR, FromC, ToR, ToC, Promo),
-            (
-                between(0, 7, FromR), between(0, 7, FromC),
-                get_piece(Board, FromR, FromC, Piece),
-                piece_belongs_to_color(Piece, Color),
-                between(0, 7, ToR), between(0, 7, ToC),
-                legal_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, CastleRights),
-                (
-                    (Color = white, Piece = 'P', ToR = 0 -> member(Promo, ['Q','R','B','N']));
-                    (Color = black, Piece = 'p', ToR = 7 -> member(Promo, ['q','r','b','n']));
-                    Promo = none
-                ),
-                (Promo = none ->
-                    simulate_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, SimBoard)
-                ;
-                    simulate_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, SimBoard)
-                ),
-                \+ in_check(SimBoard, Color)
-            ),
-            Moves
-        ),
+        generate_all_moves(Board, Color, LastMove, CastleRights, Moves),
         (Moves = [] ->
             (in_check(Board, Color) ->
                 BestValue = -9999, BestMove = none
