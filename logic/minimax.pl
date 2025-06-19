@@ -46,19 +46,15 @@ log(_, _).
 % Evaluation (fast)
 %------------------------
 evaluate(Board, Color, Value) :-
-    evaluate_rows(Board, 0, Sum),
-    (Color = white -> Value = Sum ; Value is -Sum).
+    flatten(Board, Flat),  % flatten list 2D to 1D
+    evaluate_flat(Flat, 0, Score),
+    (Color = white -> Value = Score ; Value is -Score).
 
-evaluate_rows([], Acc, Acc).
-evaluate_rows([Row|Rest], Acc, Value) :-
-    evaluate_row(Row, Acc, RowSum),
-    evaluate_rows(Rest, RowSum, Value).
-
-evaluate_row([], Acc, Acc).
-evaluate_row([Piece|Rest], Acc, Sum) :-
-    piece_value(Piece, V),
-    NewAcc is Acc + V,
-    evaluate_row(Rest, NewAcc, Sum).
+evaluate_flat([], Acc, Acc).
+evaluate_flat([P|Rest], Acc, Res) :-
+    piece_value(P, V),
+    Acc1 is Acc + V,
+    evaluate_flat(Rest, Acc1, Res).
 
 %------------------------
 % Entry point
