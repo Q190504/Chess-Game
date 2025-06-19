@@ -8,19 +8,25 @@ BROWN = (181, 136, 99)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 SQ_SIZE = 80
+PROMO_BOX_WIDTH = 120
+PROMO_BOX_HEIGHT = 120
+PROMO_GAP = 20
+PROMO_START_X = 40
+PROMO_START_Y = 200
 
 class Board:
     def __init__(self):
         self.grid = [
-            ['r', 'e', 'e', 'e', 'k', 'e', 'e', 'r'],
+            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
             ['p'] * 8,
             ['e'] * 8,
             ['e'] * 8,
             ['e'] * 8,
             ['e'] * 8,
             ['P'] * 8,
-            ['R', 'e', 'e', 'e', 'K', 'e', 'e', 'R']
+            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
         ]
+        self.promotion_rects = []  # List of tuples (Rect, piece)
         self.rights = {
             "white_kingside": True,
             "white_queenside": True,
@@ -29,6 +35,8 @@ class Board:
         }
         self.last_move = []
         self.images = self.load_images()
+        self.white_in_check = False
+        self.black_in_check = False
 
     def load_images(self):
         piece_map = {
@@ -46,7 +54,38 @@ class Board:
             images[char] = pygame.transform.scale(pygame.image.load(path), (SQ_SIZE, SQ_SIZE))
         return images
 
-    def draw(self, screen, legal_moves, font, selected=None):
+    def draw_promotion_choices(self, screen, turn, row, col):
+        self.promotion_rects.clear()
+        choices = ['q', 'r', 'b', 'n']
+        piece_case = str.upper if turn == 'white' else str.lower
+
+        # draw overlay
+        overlay = pygame.Surface((8 * SQ_SIZE, 8 * SQ_SIZE), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        screen.blit(overlay, (0, 0))
+        # draw targeted piece
+        pygame.draw.rect(screen, GREEN, (col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE), width=4)
+
+        for i, ch in enumerate(choices):
+            x = PROMO_START_X + i * (PROMO_BOX_WIDTH + PROMO_GAP)
+            y = PROMO_START_Y
+            rect = pygame.Rect(x, y, PROMO_BOX_WIDTH, PROMO_BOX_HEIGHT)
+
+            # Draw background + border
+            pygame.draw.rect(screen, (220, 220, 220), rect)
+            pygame.draw.rect(screen, (0, 0, 0), rect, 3)
+
+            # Draw piece image
+            piece = piece_case(ch)
+            if piece in self.images:
+                piece_img = self.images[piece]
+                img_x = rect.x + (PROMO_BOX_WIDTH - piece_img.get_width()) // 2
+                img_y = rect.y + (PROMO_BOX_HEIGHT - piece_img.get_height()) // 2
+                screen.blit(piece_img, (img_x, img_y))
+
+            self.promotion_rects.append((rect, piece))
+
+    def draw(self, screen, legal_moves, selected=None):
         highlight_surface = pygame.Surface((SQ_SIZE, SQ_SIZE), pygame.SRCALPHA)
 
         # Draw the board
@@ -69,13 +108,13 @@ class Board:
             screen.blit(highlight_surface, (c * SQ_SIZE, r * SQ_SIZE))
 
         # Highlight checked squares
-        if is_in_check(self.grid, 'black'):
+        if self.black_in_check:
             for r in range(8):
                 for c in range(8):
                     if self.grid[r][c] == 'k':
                         pygame.draw.rect(screen, RED, (c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE), width=4)
 
-        if is_in_check(self.grid, 'white'):
+        if self.white_in_check:
             for r in range(8):
                 for c in range(8):
                     if self.grid[r][c] == 'K':
@@ -89,3 +128,7 @@ class Board:
     def get_square(self, pos):
         x, y = pos
         return y // SQ_SIZE, x // SQ_SIZE
+    
+    def update_check_status(self):
+        self.white_in_check = is_in_check(self.grid, 'white')
+        self.black_in_check = is_in_check(self.grid, 'black')

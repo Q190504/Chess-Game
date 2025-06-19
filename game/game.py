@@ -13,8 +13,8 @@ class Game:
 
         self.board = Board()
         self.players = {
-            "white": Player("white"),
-            "black": Player("black")
+            "white": Player("white", promotion_callback = self.ask_promotion_choice),
+            "black": Player("black", promotion_callback = self.ask_promotion_choice)
         }
 
         self.turn = "white"
@@ -22,9 +22,26 @@ class Game:
         self.legal_moves = []
         self.running = True
 
+    def ask_promotion_choice(self, turn, row, col):
+        while True:
+            self.screen.fill((50, 50, 50))
+            self.board.draw(self.screen, [], None)
+            self.board.draw_promotion_choices(self.screen, turn, row, col)
+            pygame.display.flip()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mx, my = pygame.mouse.get_pos()
+                    for rect, piece in self.board.promotion_rects:
+                        if rect.collidepoint(mx, my):
+                            return piece
+
     def run(self):
         while self.running:
-            self.board.draw(self.screen, self.legal_moves, self.font, self.selected)
+            self.board.draw(self.screen, self.legal_moves, self.selected)
             pygame.display.flip()
 
             for event in pygame.event.get():
