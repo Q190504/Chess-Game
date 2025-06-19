@@ -30,6 +30,7 @@ class Player:
                 )
                 if moved:
                     board.update_check_status()
+                    print(f"Player moved {board.grid[row][col]} from {selected} to ({row}, {col})")
                     if is_checkmate(board.grid, new_turn, board.last_move, board.rights):
                         print(f"Checkmate! {turn.capitalize()} wins.")
                     elif is_stalemate(board.grid, new_turn, board.last_move, board.rights):

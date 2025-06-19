@@ -1,3 +1,4 @@
+
 %------------------------
 % Piece ownership
 %------------------------
@@ -27,13 +28,15 @@ log(Msg, Args) :-
 log(_, _).
 
 %------------------------
-% Evaluation (fast)
+% Evaluation
 %------------------------
 % Entry point
 evaluate(Board, Color, Score) :-
     piece_bonus(Color, Board, MaterialScore),
     positional_bonus(Color, Board, PositionalScore),
-    Score is MaterialScore + PositionalScore.
+    opponent_color(Color, OpponentColor),
+    (stalemate(Board, OpponentColor, _, _) -> StalematePenalty = -50 ; StalematePenalty = 0),
+    Score is MaterialScore + PositionalScore + StalematePenalty.
 
 %------------------------
 % Entry point
@@ -45,6 +48,32 @@ minimax(Board, Color, Depth, LastMove, CastleRights, BestMove, Value) :-
 %------------------------
 % Minimax with pruning
 %------------------------
+score_and_sort_moves(Board, Color, Moves, SortedMoves) :-
+    map_list_to_pairs(move_score(Board, Color), Moves, ScoredMoves),
+    keysort(ScoredMoves, SortedPairs),
+    reverse(SortedPairs, Descending),  % higher scores first
+    pairs_values(Descending, SortedMoves).
+
+move_score(Board, Color, move(FR, FC, TR, TC, Promo), Score) :-
+    (
+        (Color == white,
+         (Promo == 'Q' -> PromoBonus = 1000 ;
+          Promo == 'N' -> PromoBonus = 900 ;
+          Promo == 'R' -> PromoBonus = 800 ;
+          Promo == 'B' -> PromoBonus = 700 ;
+          PromoBonus = 0))
+    ;
+        (Color == black,
+         (Promo == 'q' -> PromoBonus = 1000 ;
+          Promo == 'n' -> PromoBonus = 900 ;
+          Promo == 'r' -> PromoBonus = 800 ;
+          Promo == 'b' -> PromoBonus = 700 ;
+          PromoBonus = 0))
+    ),
+    Score is PromoBonus,
+    log("Move ~w - ~w with promo ~w scored: ~w~n", [[FR, FC], [TR, TC], Promo, Score]).
+
+
 find_pieces(Board, Color, Pieces) :-
     findall((R, C, Piece),
         (
@@ -69,8 +98,8 @@ generate_all_moves(Board, Color, LastMove, CastleRights, Moves) :-
         Moves
     ).
 
-generate_promotion('P', white, 0, Promo) :- member(Promo, ['Q','R','B','N']).
-generate_promotion('p', black, 7, Promo) :- member(Promo, ['q','r','b','n']).
+generate_promotion('P', white, 0, Promo) :- member(Promo, ['N','B','R','Q']).
+generate_promotion('p', black, 7, Promo) :- member(Promo, ['n','b','r','q']).
 generate_promotion(_, _, _, none).
 
 simulate_and_validate(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, CastleRights, NewCastle, SimBoard) :-
@@ -84,7 +113,7 @@ negamax_search(Board, Color, Depth, LastMove, CastleRights, Alpha, Beta, BestMov
         log("Depth limit. Eval: ~w~n", [Value])
     ;
         generate_all_moves(Board, Color, LastMove, CastleRights, Moves),
-        
+        score_and_sort_moves(Board, Color, Moves, SortedMoves),
         (Moves = [] ->
             (in_check(Board, Color) ->
                 BestValue = -9999, BestMove = none
@@ -92,7 +121,7 @@ negamax_search(Board, Color, Depth, LastMove, CastleRights, Alpha, Beta, BestMov
                 BestValue = 0, BestMove = none
             )
         ;
-            negamax_loop(Moves, Board, Color, Depth, Alpha, Beta, LastMove, CastleRights, BestMove, BestValue)
+            negamax_loop(SortedMoves, Board, Color, Depth, Alpha, Beta, LastMove, CastleRights, BestMove, BestValue)
         )
     ).
 

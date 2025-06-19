@@ -17,14 +17,14 @@ PROMO_START_Y = 200
 class Board:
     def __init__(self):
         self.grid = [
-            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
-            ['p'] * 8,
-            ['e'] * 8,
-            ['e'] * 8,
-            ['e'] * 8,
-            ['e'] * 8,
-            ['P'] * 8,
-            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+            ['r','n','b','q','k','b','n','r'],
+            ['p','p','p','p','p','p','p','p'],
+            ['e','e','e','e','e','e','e','e'],
+            ['e','e','e','e','e','e','e','e'],
+            ['e','e','e','e','e','e','e','e'],
+            ['e','e','e','e','e','e','e','e'],
+            ['P','P','P','P','P','P','P','P'],
+            ['R','N','B','Q','K','B','N','R']
         ]
         self.promotion_rects = []  # List of tuples (Rect, piece)
         self.rights = {
