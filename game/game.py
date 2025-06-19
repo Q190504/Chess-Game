@@ -8,15 +8,15 @@ WIDTH, HEIGHT = 640, 640
 class Game:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        self.screen = pygame.display.set_mode((WIDTH + 300, HEIGHT))
         pygame.display.set_caption("Chess with Prolog")
         self.font = pygame.font.SysFont("arial", 36)
 
         self.board = Board()
 
         self.players = {
-            "white": Player("white", promotion_callback=self.ask_promotion_choice),
-            "black": AIPlayer("black")
+            "black": Player("black", promotion_callback=self.ask_promotion_choice),
+            "white": AIPlayer("white")
         }
 
         self.turn = "white"

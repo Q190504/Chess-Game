@@ -141,7 +141,7 @@ def move_piece(board, start, end, turn, last_move=None, castle_rights=None, prom
             # Prepare for next turn
             next_turn = "black" if turn == "white" else "white"
             new_last_move = (sr, sc, er, ec, piece)
-
+            
             return board, next_turn, new_last_move, new_rights, True
 
     return board, turn, last_move, castle_rights, False
@@ -150,7 +150,9 @@ def get_minimax_move(board, turn, depth = 3, last_move=None, castle_rights=None)
     board_str = python_board_to_prolog(board)
     move_term = get_move_term(last_move)
     rights_term = get_castle_rights_term(castle_rights)
+    
     result = list(prolog.query(f"minimax({board_str}, {turn}, {depth}, {move_term}, {rights_term}, BestMove, Value)."))
+    
     print(result)
     if len(result) > 0:
         return result[0]

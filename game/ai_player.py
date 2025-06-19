@@ -4,6 +4,14 @@ class AIPlayer:
     def __init__(self, color):
         self.color = color
 
+    @staticmethod
+    def write_history(board, last_move, promotion=None, special=None):
+        if promotion:
+            last_move = last_move + (promotion,)
+        if special:
+            last_move = last_move + (special,)
+        board.history.append(last_move)
+
     def make_move(self, board):
         move_data = get_minimax_move(board.grid, self.color, 3, board.last_move, board.rights)
         if not move_data:
@@ -17,7 +25,23 @@ class AIPlayer:
         if promotion == 'none':
             promotion = None
 
-        # Execute the move
+        # Detect special moves before applying
+        piece = board.grid[from_row][from_col]
+        target = board.grid[to_row][to_col]
+        special = None
+
+        # Castling
+        if piece.lower() == 'k' and abs(from_col - to_col) == 2:
+            if to_col == 6:
+                special = 'castle_kingside'
+            elif to_col == 2:
+                special = 'castle_queenside'
+
+        # En passant
+        if piece.lower() == 'p' and target == 'e' and from_col != to_col and board.grid[to_row][to_col] == 'e':
+            special = 'en_passant'
+
+        # Move piece
         board.grid, new_turn, board.last_move, board.rights, moved = move_piece(
             board.grid,
             (from_row, from_col),
@@ -30,6 +54,8 @@ class AIPlayer:
 
         if moved:
             board.update_check_status()
+            self.write_history(board, board.last_move, promotion=promotion, special=special)
+
             if is_checkmate(board.grid, new_turn, board.last_move, board.rights):
                 print(f"Checkmate! {self.color.capitalize()} wins.")
             elif is_stalemate(board.grid, new_turn, board.last_move, board.rights):
