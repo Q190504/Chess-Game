@@ -105,6 +105,7 @@ negamax_search(Board, Color, Depth, LastMove, CastleRights, Alpha, Beta, BestMov
         log("Depth limit. Eval: ~w~n", [Value])
     ;
         generate_all_moves(Board, Color, LastMove, CastleRights, Moves),
+        
         (Moves = [] ->
             (in_check(Board, Color) ->
                 BestValue = -9999, BestMove = none
@@ -122,10 +123,7 @@ negamax_loop([], _Board, _Color, _Depth, _Alpha, _Beta, _LastMove, _CastleRights
 negamax_loop([Move|Rest], Board, Color, Depth, Alpha, Beta, LastMove, CastleRights, BestMove, BestValue) :-
     Move = move(FromR, FromC, ToR, ToC, Promo),
     (
-        Promo = none ->
-            simulate_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, none, CastleRights, NewCastle, SimBoard)
-        ;
-            simulate_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, CastleRights, NewCastle, SimBoard)
+        simulate_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, CastleRights, NewCastle, SimBoard)
     ),
     Depth1 is Depth - 1,
     % Negamax recursive call
