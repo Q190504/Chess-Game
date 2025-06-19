@@ -1,7 +1,7 @@
 import pygame
 from game.board import Board
 from game.player import Player
-from logic.prolog_interface import get_minimax_move
+from game.ai_player import AIPlayer  # Import AIPlayer
 
 WIDTH, HEIGHT = 640, 640
 
@@ -13,9 +13,10 @@ class Game:
         self.font = pygame.font.SysFont("arial", 36)
 
         self.board = Board()
+
         self.players = {
-            "white": Player("white", promotion_callback = self.ask_promotion_choice),
-            "black": Player("black", promotion_callback = self.ask_promotion_choice)
+            "white": Player("white", promotion_callback=self.ask_promotion_choice),
+            "black": AIPlayer("black")
         }
 
         self.turn = "white"
@@ -33,7 +34,6 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
-
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     mx, my = pygame.mouse.get_pos()
                     for rect, piece in self.board.promotion_rects:
@@ -45,6 +45,12 @@ class Game:
             self.board.draw(self.screen, self.legal_moves, self.selected)
             pygame.display.flip()
 
+            # AI TURN
+            if isinstance(self.players[self.turn], AIPlayer):
+                self.turn = self.players[self.turn].make_move(self.board)
+                continue
+
+            # HUMAN TURN
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -56,7 +62,5 @@ class Game:
                     self.selected, self.legal_moves, self.turn = player.handle_click(
                         self.board, self.selected, row, col, self.turn
                     )
-                    if (self.turn == 'black'):
-                        get_minimax_move(self.board.grid, self.turn, 3, self.board.last_move, self.board.rights)
 
         pygame.quit()

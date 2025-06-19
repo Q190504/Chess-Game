@@ -3,6 +3,8 @@ from pyswip.prolog import Prolog
 prolog = Prolog()
 prolog.consult('utils.pl')
 prolog.consult('piece_rule.pl')
+prolog.consult('piece_bonus.pl')
+prolog.consult('positional_bonus.pl')
 prolog.consult('minimax.pl')
 
 # -------------------- Utility Conversion Functions --------------------
@@ -150,3 +152,6 @@ def get_minimax_move(board, turn, depth = 3, last_move=None, castle_rights=None)
     rights_term = get_castle_rights_term(castle_rights)
     result = list(prolog.query(f"minimax({board_str}, {turn}, {depth}, {move_term}, {rights_term}, BestMove, Value)."))
     print(result)
+    if len(result) > 0:
+        return result[0]
+    return None
