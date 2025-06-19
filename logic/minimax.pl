@@ -14,22 +14,6 @@ piece_belongs_to_color('r', black).
 piece_belongs_to_color('q', black).
 piece_belongs_to_color('k', black).
 
-%------------------------
-% Piece value
-%------------------------
-piece_value('P', 1).
-piece_value('N', 3).
-piece_value('B', 3).
-piece_value('R', 5).
-piece_value('Q', 9).
-piece_value('K', 1000).
-piece_value('p', -1).
-piece_value('n', -3).
-piece_value('b', -3).
-piece_value('r', -5).
-piece_value('q', -9).
-piece_value('k', -1000).
-piece_value(e, 0).
 
 %------------------------
 % Logging switch
@@ -45,16 +29,11 @@ log(_, _).
 %------------------------
 % Evaluation (fast)
 %------------------------
-evaluate(Board, Color, Value) :-
-    flatten(Board, Flat),  % flatten list 2D to 1D
-    evaluate_flat(Flat, 0, Score),
-    (Color = white -> Value = Score ; Value is -Score).
-
-evaluate_flat([], Acc, Acc).
-evaluate_flat([P|Rest], Acc, Res) :-
-    piece_value(P, V),
-    Acc1 is Acc + V,
-    evaluate_flat(Rest, Acc1, Res).
+% Entry point
+evaluate(Board, Color, Score) :-
+    piece_bonus(Color, Board, MaterialScore),
+    positional_bonus(Color, Board, PositionalScore),
+    Score is MaterialScore + PositionalScore.
 
 %------------------------
 % Entry point
@@ -117,7 +96,6 @@ negamax_search(Board, Color, Depth, LastMove, CastleRights, Alpha, Beta, BestMov
         )
     ).
 
-
 negamax_loop([], _Board, _Color, _Depth, _Alpha, _Beta, _LastMove, _CastleRights, none, -10000).
 
 negamax_loop([Move|Rest], Board, Color, Depth, Alpha, Beta, LastMove, CastleRights, BestMove, BestValue) :-
@@ -149,3 +127,4 @@ negamax_loop([Move|Rest], Board, Color, Depth, Alpha, Beta, LastMove, CastleRigh
             BestMove = NewBestMove, BestValue = NewAlpha
         )
     ).
+
