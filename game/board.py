@@ -73,6 +73,8 @@ class Board:
         return log_lines
 
     def format_move(self, move):
+        if (len(move) == 1):
+            return move[0]
         from_r, from_c, to_r, to_c = move[:4]
         piece = move[4]
         promo = move[5] if len(move) > 5 and isinstance(move[5], str) and len(move[5]) == 1 else None

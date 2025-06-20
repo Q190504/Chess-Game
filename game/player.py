@@ -18,18 +18,18 @@ class Player:
 
     def handle_click(self, board, selected, row, col, turn):
         if not (0 <= row < 8 and 0 <= col < 8):
-            return None, [], turn  # Click is out of bounds
+            return None, [], turn, True  # Click is out of bounds
 
         piece = board.grid[row][col]
         legal_moves = []
 
         if selected:
             if (row, col) == selected:
-                return None, [], turn  # Deselect
+                return None, [], turn, True  # Deselect
 
             elif piece != 'e' and self.is_own_piece(piece):
                 # Select a different own piece
-                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move, board.rights), turn
+                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move, board.rights), turn, True
 
             else:
                 # Attempt move
@@ -42,8 +42,9 @@ class Player:
 
                 # Handle promotion
                 if piece.lower() == 'p' and (to_r == 0 or to_r == 7):
-                    if self.promotion_callback:
-                        promotion = self.promotion_callback(turn, to_r, to_c)
+                    if (to_r, to_c) in get_legal_moves(board.grid, turn, row, col, board.last_move, board.rights):
+                        if self.promotion_callback:
+                            promotion = self.promotion_callback(turn, to_r, to_c)
 
                 # Detect castling
                 if piece.lower() == 'k' and abs(from_c - to_c) == 2:
@@ -68,15 +69,19 @@ class Player:
 
                     if is_checkmate(board.grid, new_turn, board.last_move, board.rights):
                         print(f"Checkmate! {turn.capitalize()} wins.")
+                        board.history.append([f"Checkmate! {self.color.capitalize()} wins."])
+                        return None, [], new_turn, False
                     elif is_stalemate(board.grid, new_turn, board.last_move, board.rights):
                         print("Stalemate! It's a draw.")
+                        board.history.append(["Stalemate! It's a draw."])
+                        return None, [], new_turn, False
 
-                    return None, [], new_turn
-                return None, [], turn
+                    return None, [], new_turn, True
+                return None, [], turn, True
 
         else:
             # No selection yet — select own piece
             if piece != 'e' and self.is_own_piece(piece):
-                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move, board.rights), turn
-
-        return selected, legal_moves, turn
+                return (row, col), get_legal_moves(board.grid, turn, row, col, board.last_move, board.rights), turn, True
+        
+        return selected, legal_moves, turn, True
