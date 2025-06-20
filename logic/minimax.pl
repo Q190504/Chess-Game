@@ -54,25 +54,14 @@ score_and_sort_moves(Board, Color, Moves, SortedMoves) :-
     reverse(SortedPairs, Descending),  % higher scores first
     pairs_values(Descending, SortedMoves).
 
-move_score(Board, Color, move(FR, FC, TR, TC, Promo), Score) :-
-    (
-        (Color == white,
-         (Promo == 'Q' -> PromoBonus = 1000 ;
-          Promo == 'N' -> PromoBonus = 900 ;
-          Promo == 'R' -> PromoBonus = 800 ;
-          Promo == 'B' -> PromoBonus = 700 ;
-          PromoBonus = 0))
-    ;
-        (Color == black,
-         (Promo == 'q' -> PromoBonus = 1000 ;
-          Promo == 'n' -> PromoBonus = 900 ;
-          Promo == 'r' -> PromoBonus = 800 ;
-          Promo == 'b' -> PromoBonus = 700 ;
-          PromoBonus = 0))
-    ),
-    Score is PromoBonus,
-    log("Move ~w - ~w with promo ~w scored: ~w~n", [[FR, FC], [TR, TC], Promo, Score]).
+promo_score('Q', 900). promo_score('R', 500).
+promo_score('B', 300). promo_score('N', 300).
+promo_score('q', 900). promo_score('r', 500).
+promo_score('b', 300). promo_score('n', 300).
 
+move_score(_Board, _Color, move(_, _, _TR, _TC, Promo), Score) :-
+    (Promo \= none -> promo_score(Promo, PromoScore) ; PromoScore = 0),
+    Score is PromoScore.
 
 find_pieces(Board, Color, Pieces) :-
     findall((R, C, Piece),
@@ -85,22 +74,28 @@ find_pieces(Board, Color, Pieces) :-
 
 generate_all_moves(Board, Color, LastMove, CastleRights, Moves) :-
     find_pieces(Board, Color, MyPieces),
-    findall(
-        move(FromR, FromC, ToR, ToC, Promo),
+    findall(Move,
         (
             member((FromR, FromC, Piece), MyPieces),
-            between(0, 7, ToR), between(0, 7, ToC),
-            legal_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, CastleRights),
-            generate_promotion(Piece, Color, ToR, Promo),
-            simulate_and_validate(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, CastleRights, _NewCastle, SimBoard),
-            \+ in_check(SimBoard, Color)
+            generate_piece_moves(Board, Color, FromR, FromC, Piece, LastMove, CastleRights, RawMoves),
+            member(Move0, RawMoves),
+            generate_promotion(Piece, Color, Move0, MoveWithPromo),
+            MoveWithPromo = move(FR, FC, TR, TC, Promo),
+            simulate_and_validate(Board, Color, FR, FC, TR, TC, LastMove, Promo, CastleRights, _NewCastle, SimBoard),
+            \+ in_check(SimBoard, Color),
+            Move = MoveWithPromo
         ),
-        Moves
-    ).
+        Moves).
 
-generate_promotion('P', white, 0, Promo) :- member(Promo, ['N','B','R','Q']).
-generate_promotion('p', black, 7, Promo) :- member(Promo, ['n','b','r','q']).
-generate_promotion(_, _, _, none).
+
+generate_promotion('P', white, move(FR, FC, TR, TC, none), move(FR, FC, TR, TC, Promo)) :-
+    TR =:= 0, member(Promo, ['Q', 'R', 'B', 'N']).
+
+generate_promotion('p', black, move(FR, FC, TR, TC, none), move(FR, FC, TR, TC, Promo)) :-
+    TR =:= 7, member(Promo, ['q', 'r', 'b', 'n']).
+
+generate_promotion(_, _, Move, Move).  % không phong
+
 
 simulate_and_validate(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, CastleRights, NewCastle, SimBoard) :-
     simulate_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, Promo, CastleRights, NewCastle, SimBoard).

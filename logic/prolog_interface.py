@@ -5,6 +5,7 @@ prolog.consult('utils.pl')
 prolog.consult('piece_rule.pl')
 prolog.consult('piece_bonus.pl')
 prolog.consult('positional_bonus.pl')
+prolog.consult('move_generation.pl')
 prolog.consult('minimax.pl')
 
 # -------------------- Utility Conversion Functions --------------------
@@ -94,8 +95,10 @@ def handle_promotion(board, piece, er, ec, turn, promotion_choice=None):
             board[er][ec] = promotion_choice
 
 
-def update_castle_rights(rights, piece, sr, sc, turn):
+def update_castle_rights(rights, piece, sr, sc, turn, captured_piece=None, er=None, ec=None):
     new_rights = rights.copy() if rights else {}
+
+    # King moved
     if piece.lower() == 'k':
         if turn == "white":
             new_rights["white_kingside"] = False
@@ -103,6 +106,8 @@ def update_castle_rights(rights, piece, sr, sc, turn):
         else:
             new_rights["black_kingside"] = False
             new_rights["black_queenside"] = False
+
+    # Rook moved
     elif piece.lower() == 'r':
         if turn == "white":
             if (sr, sc) == (7, 0): new_rights["white_queenside"] = False
@@ -110,6 +115,14 @@ def update_castle_rights(rights, piece, sr, sc, turn):
         else:
             if (sr, sc) == (0, 0): new_rights["black_queenside"] = False
             if (sr, sc) == (0, 7): new_rights["black_kingside"] = False
+
+    # Rook captured
+    if captured_piece and captured_piece.lower() == 'r':
+        if (er, ec) == (7, 0): new_rights["white_queenside"] = False
+        if (er, ec) == (7, 7): new_rights["white_kingside"] = False
+        if (er, ec) == (0, 0): new_rights["black_queenside"] = False
+        if (er, ec) == (0, 7): new_rights["black_kingside"] = False
+
     return new_rights
 
 
@@ -128,6 +141,7 @@ def move_piece(board, start, end, turn, last_move=None, castle_rights=None, prom
         query = f"safe_move({board_str}, {turn}, {sr}, {sc}, {er}, {ec}, {move_term}, {rights_term})"
         if list(prolog.query(query)):
             # Perform move
+            captured_piece = board[er][ec]
             board[er][ec], board[sr][sc] = piece, 'e'
 
             handle_en_passant(board, piece, sr, sc, er, ec, turn, board_str, last_move)
@@ -136,7 +150,7 @@ def move_piece(board, start, end, turn, last_move=None, castle_rights=None, prom
 
             handle_promotion(board, piece, er, ec, turn, promotion_choice) 
 
-            new_rights = update_castle_rights(castle_rights, piece, sr, sc, turn)
+            new_rights = update_castle_rights(castle_rights, piece, sr, sc, turn, captured_piece, er, ec)
 
             # Prepare for next turn
             next_turn = "black" if turn == "white" else "white"
