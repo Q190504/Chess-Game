@@ -164,6 +164,66 @@ simulate_move(Board, Color, R, C, ToR, ToC, LastMove, NewBoard) :-
     ),
     set_piece(TempBoard2, ToR, ToC, Piece, NewBoard). % New Pos to piece
 
+% Add Simulate for minimax
+% multi_set_piece(+BoardIn, +Updates, -BoardOut)
+multi_set_piece(Board, [], Board).
+multi_set_piece(BoardIn, [(R,C,Val)|Rest], BoardOut) :-
+    set_piece(BoardIn, R, C, Val, TempBoard),
+    multi_set_piece(TempBoard, Rest, BoardOut).
+
+% simulate_move(+Board, +Color, +R, +C, +ToR, +ToC, +LastMove, +PromoPiece, +CastleIn, -CastleOut, -NewBoard)
+simulate_move(Board, Color, R, C, ToR, ToC, LastMove, PromoPiece, CastleIn, CastleOut, NewBoard) :-
+    get_piece(Board, R, C, Piece),
+    Piece \= e,
+
+    % Try en passant
+    (
+        en_passant(Board, Color, R, C, ToR, ToC, LastMove) ->
+            (Color = white -> CapR is ToR + 1 ; CapR is ToR - 1),
+            multi_set_piece(Board, [(CapR, ToC, e), (R, C, e)], TempBoard),
+            !
+    ;
+        % Try castling
+        castling_move(Board, Color, R, C, ToR, ToC, Piece, TempBoard) ->
+            !
+    ;
+        % Normal move: clear source square
+        set_piece(Board, R, C, e, TempBoard)
+    ),
+
+    % Handle promotion if applicable
+    (
+        PromoPiece \= none,
+        ((Piece = 'P', Color = white, ToR = 0) ; (Piece = 'p', Color = black, ToR = 7)) ->
+            set_piece(TempBoard, ToR, ToC, PromoPiece, FinalBoard)
+    ;
+        set_piece(TempBoard, ToR, ToC, Piece, FinalBoard)
+    ),
+
+    % Update castling rights
+    update_castle_rights(Board, Piece, R, C, CastleIn, CastleOut),
+
+    NewBoard = FinalBoard.
+
+% update_castle_rights(+Piece, +FromR, +FromC, +CastleIn, -CastleOut)
+update_castle_rights(Board, Piece, R, C, castle_rights(WK, WQ, BK, BQ), castle_rights(NWK, NWQ, NBK, NBQ)) :-
+    NWK0 = WK, NWQ0 = WQ, NBK0 = BK, NBQ0 = BQ,
+
+    % If move
+    ( Piece = 'K' -> NWK1 = false, NWQ1 = false ; NWK1 = NWK0, NWQ1 = NWQ0 ),
+    ( Piece = 'k' -> NBK1 = false, NBQ1 = false ; NBK1 = NBK0, NBQ1 = NBQ0 ),
+    ( Piece = 'R', R = 7, C = 0 -> NWQ2 = false ; NWQ2 = NWQ1 ),
+    ( Piece = 'R', R = 7, C = 7 -> NWK2 = false ; NWK2 = NWK1 ),
+    ( Piece = 'r', R = 0, C = 0 -> NBQ2 = false ; NBQ2 = NBQ1 ),
+    ( Piece = 'r', R = 0, C = 7 -> NBK2 = false ; NBK2 = NBK1 ),
+
+    % If rook captured
+    ( NWQ2 = true, \+ get_piece(Board, 7, 0, 'R') -> NWQ = false ; NWQ = NWQ2 ),
+    ( NWK2 = true, \+ get_piece(Board, 7, 7, 'R') -> NWK = false ; NWK = NWK2 ),
+    ( NBQ2 = true, \+ get_piece(Board, 0, 0, 'r') -> NBQ = false ; NBQ = NBQ2 ),
+    ( NBK2 = true, \+ get_piece(Board, 0, 7, 'r') -> NBK = false ; NBK = NBK2 ).
+
+
 % ------------------------------
 % Check Logic
 % Check if any opponent piece has a legal move to the king square.

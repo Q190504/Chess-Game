@@ -211,3 +211,20 @@ king_castle_move(Board, black, 0, 4, 0, 2, CastleRights) :-  % Black queenside
     \+ under_attack(Board, black, 0, 2).
 
 
+% castling_move(+Board, +Color, +R, +C, +ToR, +ToC, +Piece, -NewBoard)
+castling_move(Board, white, 7, 4, _, 6, 'K', NewBoard) :-  % Kingside white
+    multi_set_piece(Board,
+        [(7,4,e), (7,7,e), (7,6,'K'), (7,5,'R')],
+        NewBoard).
+castling_move(Board, white, 7, 4, _, 2, 'K', NewBoard) :-  % Queenside white
+    multi_set_piece(Board,
+        [(7,4,e), (7,0,e), (7,2,'K'), (7,3,'R')],
+        NewBoard).
+castling_move(Board, black, 0, 4, _, 6, 'k', NewBoard) :-  % Kingside black
+    multi_set_piece(Board,
+        [(0,4,e), (0,7,e), (0,6,'k'), (0,5,'r')],
+        NewBoard).
+castling_move(Board, black, 0, 4, _, 2, 'k', NewBoard) :-  % Queenside black
+    multi_set_piece(Board,
+        [(0,4,e), (0,0,e), (0,2,'k'), (0,3,'r')],
+        NewBoard).
