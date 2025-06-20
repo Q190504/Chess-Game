@@ -1,4 +1,5 @@
 from logic.prolog_interface import get_minimax_move, move_piece, is_checkmate, is_stalemate
+import time 
 
 class AIPlayer:
     def __init__(self, color):
@@ -13,12 +14,23 @@ class AIPlayer:
         board.history.append(last_move)
 
     def make_move(self, board):
+        start_time = time.time()  # bắt đầu tính giờ
+
         move_data = get_minimax_move(board.grid, self.color, 3, board.last_move, board.rights)
+
+        end_time = time.time()  # kết thúc tính giờ
+        elapsed = end_time - start_time
+        print(f"AI ({self.color}) computed move in {elapsed:.3f} seconds.")
+
         if not move_data:
             print("AI has no legal moves.")
-            return self.color  # No move, turn stays the same
-
+            return self.color, False  # No move, turn stays the same
+        
         best_move = move_data['BestMove']
+        if best_move == 'none':
+            print("AI has no legal moves.")
+            return self.color, False  # No move, turn stays the same
+        
         move_args = best_move.replace('move(', '').replace(')', '').split(',')
         from_row, from_col, to_row, to_col = map(int, move_args[:4])
         promotion = move_args[4].strip()
@@ -58,9 +70,13 @@ class AIPlayer:
 
             if is_checkmate(board.grid, new_turn, board.last_move, board.rights):
                 print(f"Checkmate! {self.color.capitalize()} wins.")
+                board.history.append([f"Checkmate! {self.color.capitalize()} wins."])
+                return new_turn, False
             elif is_stalemate(board.grid, new_turn, board.last_move, board.rights):
                 print("Stalemate! It's a draw.")
-            return new_turn
+                board.history.append(["Stalemate! It's a draw."])
+                return new_turn, False
+            return new_turn, True
         else:
             print("AI move failed.")
-            return self.color
+            return self.color, False
