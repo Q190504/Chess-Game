@@ -9,9 +9,22 @@ prolog.consult('move_generation.pl')
 prolog.consult('minimax.pl')
 
 # -------------------- Utility Conversion Functions --------------------
+def python_list_to_prolog_list(py_list):
+    return "[" + ",".join(str(x) for x in py_list) + "]"
 
 def python_board_to_prolog(board):
     return "[" + ",".join("[" + ",".join(f"'{p}'" for p in row) + "]" for row in board) + "]"
+
+def get_board_hash(board, color, last_move, castle_rights):
+    board_str = python_board_to_prolog(board)
+    move_term = get_move_term(last_move)
+    rights_term = get_castle_rights_term(castle_rights)
+    
+    query = f"rep_board_hash({board_str}, {color}, {move_term}, {rights_term}, Hash)"
+    result = list(prolog.query(query))
+    if result:
+        return result[0]["Hash"]
+    return None
 
 
 def get_move_term(move):
@@ -95,7 +108,7 @@ def handle_promotion(board, piece, er, ec, turn, promotion_choice=None):
             board[er][ec] = promotion_choice
 
 
-def update_castle_rights(rights, piece, sr, sc, turn, captured_piece=None, er=None, ec=None):
+def update_castle_rights(board, rights, piece, turn):
     new_rights = rights.copy() if rights else {}
 
     # King moved
@@ -107,21 +120,17 @@ def update_castle_rights(rights, piece, sr, sc, turn, captured_piece=None, er=No
             new_rights["black_kingside"] = False
             new_rights["black_queenside"] = False
 
-    # Rook moved
-    elif piece.lower() == 'r':
-        if turn == "white":
-            if (sr, sc) == (7, 0): new_rights["white_queenside"] = False
-            if (sr, sc) == (7, 7): new_rights["white_kingside"] = False
-        else:
-            if (sr, sc) == (0, 0): new_rights["black_queenside"] = False
-            if (sr, sc) == (0, 7): new_rights["black_kingside"] = False
+    # WHITE
+    if board[7][0] != 'R':
+        new_rights["white_queenside"] = False
+    if board[7][7] != 'R':
+        new_rights["white_kingside"] = False
 
-    # Rook captured
-    if captured_piece and captured_piece.lower() == 'r':
-        if (er, ec) == (7, 0): new_rights["white_queenside"] = False
-        if (er, ec) == (7, 7): new_rights["white_kingside"] = False
-        if (er, ec) == (0, 0): new_rights["black_queenside"] = False
-        if (er, ec) == (0, 7): new_rights["black_kingside"] = False
+    # BLACK
+    if board[0][0] != 'r':
+        new_rights["black_queenside"] = False
+    if board[0][7] != 'r':
+        new_rights["black_kingside"] = False
 
     return new_rights
 
@@ -150,7 +159,7 @@ def move_piece(board, start, end, turn, last_move=None, castle_rights=None, prom
 
             handle_promotion(board, piece, er, ec, turn, promotion_choice) 
 
-            new_rights = update_castle_rights(castle_rights, piece, sr, sc, turn, captured_piece, er, ec)
+            new_rights = update_castle_rights(board, castle_rights, piece, turn)
 
             # Prepare for next turn
             next_turn = "black" if turn == "white" else "white"
@@ -160,14 +169,20 @@ def move_piece(board, start, end, turn, last_move=None, castle_rights=None, prom
 
     return board, turn, last_move, castle_rights, False
 
-def get_minimax_move(board, turn, depth = 3, last_move=None, castle_rights=None):
+def get_minimax_move(board, turn, depth=3, last_move=None, castle_rights=None, history=None):
+    if history is None:
+        current_hash = get_board_hash(board, turn, depth, last_move, castle_rights)
+        history = [current_hash] if current_hash is not None else []
+
     board_str = python_board_to_prolog(board)
     move_term = get_move_term(last_move)
     rights_term = get_castle_rights_term(castle_rights)
-    
-    result = list(prolog.query(f"minimax({board_str}, {turn}, {depth}, {move_term}, {rights_term}, BestMove, Value)."))
-    
+    history_term = python_list_to_prolog_list(history)
+
+    query_str = f"minimax({board_str}, {turn}, {depth}, {move_term}, {rights_term}, {history_term}, BestMove, Value)."
+    result = list(prolog.query(query_str))
+
     print(result)
-    if len(result) > 0:
+    if result:
         return result[0]
     return None
