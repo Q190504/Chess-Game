@@ -1,22 +1,36 @@
-from logic.prolog_interface import get_minimax_move, move_piece, is_checkmate, is_stalemate
+from logic.prolog_interface import get_minimax_move, move_piece, is_checkmate, is_stalemate, get_board_hash
 import time 
 
 class AIPlayer:
     def __init__(self, color):
         self.color = color
+        self.opponent_color = 'black' if color == 'white' else 'white'
 
-    @staticmethod
-    def write_history(board, last_move, promotion=None, special=None):
+    def write_history(self, board, last_move, promotion=None, special=None):
         if promotion:
             last_move = last_move + (promotion,)
         if special:
             last_move = last_move + (special,)
         board.history.append(last_move)
+        board.state_history.append(get_board_hash(board.grid, self.opponent_color, board.last_move, board.rights))
+
+    def get_dynamic_depth(self, board):
+        flat = sum(board.grid, [])
+        piece_count = sum(1 for p in flat if p not in ('e', ' '))
+    
+        if piece_count > 20:
+            return 3  # Opening/midgame
+        elif 10 < piece_count <= 20:
+            return 4  # Simplified position
+        else:
+            return 5  # Endgame
 
     def make_move(self, board):
+        depth = self.get_dynamic_depth(board)
+        print(f"AI ({self.color}) using depth {depth}")
         start_time = time.time()  # bắt đầu tính giờ
 
-        move_data = get_minimax_move(board.grid, self.color, 3, board.last_move, board.rights)
+        move_data = get_minimax_move(board.grid, self.color, depth, board.last_move, board.rights, board.state_history)
 
         end_time = time.time()  # kết thúc tính giờ
         elapsed = end_time - start_time

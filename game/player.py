@@ -1,20 +1,21 @@
-from logic.prolog_interface import get_legal_moves, move_piece, is_checkmate, is_stalemate
+from logic.prolog_interface import get_legal_moves, move_piece, is_checkmate, is_stalemate, get_board_hash
 
 class Player:
     def __init__(self, color, promotion_callback=None):
         self.color = color
+        self.opponent_color = 'black' if color == 'white' else 'white'
         self.promotion_callback = promotion_callback
 
     def is_own_piece(self, piece):
         return (self.color == "white" and piece.isupper()) or (self.color == "black" and piece.islower())
 
-    @staticmethod
-    def write_history(board, last_move, promotion=None, special=None):
+    def write_history(self, board, last_move, promotion=None, special=None):
         if promotion:
             last_move = last_move + (promotion,)
         if special:
             last_move = last_move + (special,)
         board.history.append(last_move)
+        board.state_history.append(get_board_hash(board.grid, self.opponent_color, board.last_move, board.rights))
 
     def handle_click(self, board, selected, row, col, turn):
         if not (0 <= row < 8 and 0 <= col < 8):
@@ -42,7 +43,7 @@ class Player:
 
                 # Handle promotion
                 if piece.lower() == 'p' and (to_r == 0 or to_r == 7):
-                    if (to_r, to_c) in get_legal_moves(board.grid, turn, row, col, board.last_move, board.rights):
+                    if (to_r, to_c) in get_legal_moves(board.grid, turn, from_r, from_c, board.last_move, board.rights):
                         if self.promotion_callback:
                             promotion = self.promotion_callback(turn, to_r, to_c)
 
