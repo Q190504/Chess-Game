@@ -43,7 +43,7 @@ class Player:
 
                 # Handle promotion
                 if piece.lower() == 'p' and (to_r == 0 or to_r == 7):
-                    if (to_r, to_c) in get_legal_moves(board.grid, turn, row, col, board.last_move, board.rights):
+                    if (to_r, to_c) in get_legal_moves(board.grid, turn, from_r, from_c, board.last_move, board.rights):
                         if self.promotion_callback:
                             promotion = self.promotion_callback(turn, to_r, to_c)
 
