@@ -17,14 +17,16 @@ PROMO_START_Y = 200
 class Board:
     def __init__(self):
         self.grid = [
-            ['r','n','b','q','k','b','n','r'],
-            ['p','p','p','p','p','p','p','p'],
-            ['e','e','e','e','e','e','e','e'],
-            ['e','e','e','e','e','e','e','e'],
-            ['e','e','e','e','e','e','e','e'],
-            ['e','e','e','e','e','e','e','e'],
-            ['P','P','P','P','P','P','P','P'],
-            ['R','N','B','Q','K','B','N','R']
+            ['r','e','q','e','k','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','b','e','e','e','e','e','p'],['e','e','e','e','e','e','e','P'],['e','K','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e']
+            #['e','e','e','r','k','e','e','e'],['e','e','e','e','b','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','q','e','e','p'],['e','e','e','n','e','e','e','P'],['e','e','e','e','e','K','e','e'],['e','e','e','e','e','B','R','e']
+            # ['r','n','b','q','k','b','n','r'],
+            # ['p','p','p','p','p','p','p','p'],
+            # ['e','e','e','e','e','e','e','e'],
+            # ['e','e','e','e','e','e','e','e'],
+            # ['e','e','e','e','e','e','e','e'],
+            # ['e','e','e','e','e','e','e','e'],
+            # ['P','P','P','P','P','P','P','P'],
+            # ['R','N','B','Q','K','B','N','R']
         ]
         self.promotion_rects = []
         self.rights = {
@@ -34,6 +36,7 @@ class Board:
             "black_queenside": True
         }
         self.history = []
+        self.state_history = []
         self.last_move = []
         self.images = self.load_images()
         self.white_in_check = False
