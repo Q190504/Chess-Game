@@ -121,5 +121,6 @@ class HistoryViewer:
                             self.running = False
                         def cancel():
                             pass
-                        Alert(self.screen, self.font, "Back to history list?", on_ok=confirm, on_cancel=cancel).show()
+                        Alert(self.screen, self.font, "Back to history list?", 
+                              [("Ok", confirm), ("Cancel", cancel)]).show()
             clock.tick(30)

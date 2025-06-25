@@ -1,7 +1,7 @@
 import os
 import pygame
 from game.history_viewer import HistoryViewer
-
+from game.alert import Alert
 class HistorySelectionScreen:
     def __init__(self, screen, font, history_dir):
         self.screen = screen
@@ -112,4 +112,6 @@ class HistorySelectionScreen:
             return True
         except Exception as e:
             print(f"Failed to open {filename}: {e}")
+            Alert(self.screen, self.font, f"Failed to open {filename}: {e}", 
+                  [("Ok", None)]).show()
             return True  # keep running even if error

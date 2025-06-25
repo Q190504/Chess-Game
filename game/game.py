@@ -108,8 +108,6 @@ class Game:
                         self.board.scroll_move_log(1)
                     elif self.back_button.collidepoint(event.pos):
                         def on_confirm():
-                            if not self.accept_move:
-                                save_history_to_json(self)
                             self.running = False
                             self.accept_move = False
                             self.clean_up()
@@ -117,8 +115,19 @@ class Game:
                         def on_cancel():
                             # Just resume game
                             pass
+                        
+                        def on_save_confirm():
+                            save_history_to_json(self)
+                            self.running = False
+                            self.accept_move = False
+                            self.clean_up()
 
-                        alert = Alert(self.screen, self.font, "Exit to menu?", on_ok=on_confirm, on_cancel=on_cancel)
+                        if not self.accept_move:
+                            alert = Alert(self.screen, self.font, "Exit to menu?",
+                                           [("Exit & save", on_save_confirm), ("Exit", on_confirm), ("Cancel", on_cancel)])
+                        else:
+                            alert = Alert(self.screen, self.font, "Exit to menu?",
+                                           [("Exit", on_confirm), ("Cancel", on_cancel)])
                         alert.show()
 
                     elif self.accept_move and isinstance(self.players[self.turn], Player):

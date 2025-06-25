@@ -1,42 +1,67 @@
 import pygame
 
 class Alert:
-    def __init__(self, screen, font, message, on_ok=None, on_cancel=None):
+    def __init__(self, screen, font, message, buttons, padding=20):
+        """
+        buttons: list of (label, callback) tuples
+        """
         self.screen = screen
         self.font = font
         self.message = message
-        self.on_ok = on_ok
-        self.on_cancel = on_cancel
+        self.buttons = buttons
+        self.padding = padding
+
+        # Measure message size
+        self.text_surface = font.render(message, True, (255, 255, 255))
+        text_width = self.text_surface.get_width()
+        text_height = self.text_surface.get_height()
+
+        # Button layout sizing
+        self.button_width = 100
+        self.button_height = 35
+        button_spacing = 10
+        total_button_width = len(buttons) * (self.button_width + button_spacing) - button_spacing
+
+        # Alert box width should fit both message and button row
+        content_width = max(text_width, total_button_width)
+        self.box_width = max(300, content_width + 2 * padding)
+        self.box_height = text_height + 90
 
         sw, sh = screen.get_size()
-        self.rect = pygame.Rect(sw // 2 - 150, sh // 2 - 75, 300, 150)
+        self.rect = pygame.Rect(
+            (sw - self.box_width) // 2,
+            (sh - self.box_height) // 2,
+            self.box_width,
+            self.box_height
+        )
 
-        self.ok_button = pygame.Rect(self.rect.centerx - 90, self.rect.bottom - 50, 80, 35)
-        self.cancel_button = pygame.Rect(self.rect.centerx + 10, self.rect.bottom - 50, 80, 35)
+        # Compute button positions
+        self.button_rects = []
+        start_x = self.rect.centerx - total_button_width // 2
+        y = self.rect.bottom - 50
+
+        for i, (label, _) in enumerate(buttons):
+            rect = pygame.Rect(start_x + i * (self.button_width + button_spacing), y, self.button_width, self.button_height)
+            self.button_rects.append((rect, label))
 
     def show(self):
         while True:
-            pygame.draw.rect(self.screen, (60, 60, 60), self.rect)
-            pygame.draw.rect(self.screen, (200, 200, 200), self.ok_button)
-            pygame.draw.rect(self.screen, (200, 200, 200), self.cancel_button)
+            pygame.draw.rect(self.screen, (60, 60, 60), self.rect, border_radius=8)
 
-            # Render message
-            text = self.font.render(self.message, True, (255, 255, 255))
-            self.screen.blit(text, (self.rect.centerx - text.get_width() // 2, self.rect.top + 30))
+            # Draw message
+            self.screen.blit(
+                self.text_surface,
+                (self.rect.centerx - self.text_surface.get_width() // 2, self.rect.top + 20)
+            )
 
-            # Render OK text
-            ok_text = self.font.render("OK", True, (0, 0, 0))
-            self.screen.blit(ok_text, (
-                self.ok_button.centerx - ok_text.get_width() // 2,
-                self.ok_button.centery - ok_text.get_height() // 2
-            ))
-
-            # Render Cancel text
-            cancel_text = self.font.render("Cancel", True, (0, 0, 0))
-            self.screen.blit(cancel_text, (
-                self.cancel_button.centerx - cancel_text.get_width() // 2,
-                self.cancel_button.centery - cancel_text.get_height() // 2
-            ))
+            # Draw buttons
+            for rect, label in self.button_rects:
+                pygame.draw.rect(self.screen, (200, 200, 200), rect, border_radius=5)
+                label_surf = self.font.render(label, True, (0, 0, 0))
+                self.screen.blit(label_surf, (
+                    rect.centerx - label_surf.get_width() // 2,
+                    rect.centery - label_surf.get_height() // 2
+                ))
 
             pygame.display.flip()
 
@@ -45,11 +70,9 @@ class Alert:
                     pygame.quit()
                     exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.ok_button.collidepoint(event.pos):
-                        if self.on_ok:
-                            self.on_ok()
-                        return
-                    elif self.cancel_button.collidepoint(event.pos):
-                        if self.on_cancel:
-                            self.on_cancel()
-                        return
+                    for i, (rect, _) in enumerate(self.button_rects):
+                        if rect.collidepoint(event.pos):
+                            _, callback = self.buttons[i]
+                            if callback:
+                                callback()
+                            return
