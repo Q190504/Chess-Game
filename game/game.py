@@ -4,7 +4,7 @@ from game.board import Board
 from game.player import Player
 from game.ai_player import AIPlayer
 from game.alert import Alert
-from logic.prolog_interface import shutdown_prolog
+from utils.utils import save_history_to_json
 
 WIDTH, HEIGHT = 640, 640
 
@@ -102,6 +102,8 @@ class Game:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if self.back_button.collidepoint(event.pos):
                         def on_confirm():
+                            if not self.accept_move:
+                                save_history_to_json(self)
                             self.running = False
                             self.accept_move = False
                             self.clean_up()

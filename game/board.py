@@ -1,6 +1,7 @@
 import pygame
 import os
 from logic.prolog_interface import is_in_check
+import copy
 
 # Constants
 WHITE = (240, 217, 181)
@@ -20,7 +21,7 @@ class Board:
         self.grid = [
             #['r','e','q','e','k','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','b','e','e','e','e','e','p'],['e','e','e','e','e','e','e','P'],['e','K','e','e','e','e','p','e'],['e','e','e','e','e','e','e','e']
             #['e','e','e','r','k','e','e','e'],['e','e','e','e','b','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','q','e','e','p'],['e','e','e','n','e','e','e','P'],['e','e','e','e','e','K','e','e'],['e','e','e','e','e','B','R','e']
-            # ['e','e','k','e','e','B','e','e'],['e','e','e','e','e','e','e','e'],['R','e','K','e','e','e','e','e'],['e','R','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e']
+            #['e','e','k','e','e','B','e','e'],['e','e','e','e','e','e','e','e'],['R','e','K','e','e','e','e','e'],['e','R','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e'],['e','e','e','e','e','e','e','e']
             ['r','n','b','q','k','b','n','r'],
             ['p','p','p','p','p','p','p','p'],
             ['e','e','e','e','e','e','e','e'],
@@ -30,6 +31,7 @@ class Board:
             ['P','P','P','P','P','P','P','P'],
             ['R','N','B','Q','K','B','N','R']
         ]
+        self.init_grid = copy.deepcopy(self.grid)
         self.promotion_rects = []
         self.rights = {
             "white_kingside": True,
