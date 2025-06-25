@@ -1,11 +1,10 @@
 import pygame
-import threading
 import time
-import os
 from game.board import Board
 from game.player import Player
 from game.ai_player import AIPlayer
-from pyswip import Prolog
+from game.alert import Alert
+from utils.utils import save_history_to_json
 
 WIDTH, HEIGHT = 640, 640
 
@@ -18,14 +17,14 @@ class Game:
         # Choose player vs AI based on selection
         if player_color == "manual":
             self.players = {
-                "white": Player("white", promotion_callback=self.ask_promotion_choice),
-                "black": Player("black", promotion_callback=self.ask_promotion_choice)
+                "white": Player("white", board=self.board, promotion_callback=self.ask_promotion_choice),
+                "black": Player("black", board=self.board, promotion_callback=self.ask_promotion_choice)
             }
         else:
             ai_color = "black" if player_color == "white" else "white"
             self.players = {
-                player_color: Player(player_color, promotion_callback=self.ask_promotion_choice),
-                ai_color: AIPlayer(ai_color)
+                player_color: Player(player_color, board=self.board, promotion_callback=self.ask_promotion_choice),
+                ai_color: AIPlayer(ai_color, board=self.board)
             }
 
         self.turn = "white"
@@ -33,9 +32,16 @@ class Game:
         self.legal_moves = []
         self.running = True
         self.accept_move = True
-        self.ai_thread = None
         self.ai_start_time = None
-
+        self.back_button = pygame.Rect(WIDTH + 50, 20, 100, 30)
+    
+    def draw_back_button(self):
+        
+        pygame.draw.rect(self.screen, (200, 100, 100), self.back_button)
+        back_text = self.font.render("Back", True, (255, 255, 255))
+        self.screen.blit(back_text, (self.back_button.centerx - back_text.get_width() // 2,
+                                 self.back_button.centery - back_text.get_height() // 2))
+        
     def ask_promotion_choice(self, turn, row, col):
         while True:
             self.screen.fill((50, 50, 50))
@@ -44,69 +50,97 @@ class Game:
             pygame.display.flip()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
+                    self.shutdown()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     mx, my = pygame.mouse.get_pos()
                     for rect, piece in self.board.promotion_rects:
                         if rect.collidepoint(mx, my):
                             return piece
 
-    def run_ai_move(self):
-        """Threaded function to let AI make its move."""
-        if self.running:
-            self.turn, self.accept_move = self.players[self.turn].make_move(self.board)
-            self.ai_thread = None
-            self.ai_start_time = None  # Clear timer when done
-
     def draw_thinking_overlay(self):
         """Draw 'Thinking...' message and elapsed time."""
         if self.ai_start_time:
             elapsed_sec = int(time.time() - self.ai_start_time)
             timer_text = self.font.render(f"AI {self.turn} thinking...{elapsed_sec} sec", True, (255, 255, 255))
-            self.screen.blit(timer_text, (WIDTH + 10, HEIGHT - 60))
+            self.screen.blit(timer_text, (WIDTH + 50, 50 + timer_text.get_height()//2))
         else:
             timer_text = self.font.render(f"This turn: {self.turn}", True, (255, 255, 255))
-            self.screen.blit(timer_text, (WIDTH + 10, HEIGHT - 60))
+            self.screen.blit(timer_text, (WIDTH + 50, 50 + timer_text.get_height()//2))
+
+    def clean_up(self):
+        if isinstance(self.players["white"], AIPlayer):
+            self.players["white"].terminate_task()
+        if isinstance(self.players["black"], AIPlayer):
+            self.players["black"].terminate_task()
 
     def shutdown(self):
-        if self.ai_thread and self.ai_thread.is_alive():
-            # Optionally wait briefly to avoid resource corruption
-            self.ai_thread.join(timeout=0.5)
+        self.clean_up()
         pygame.quit()
-        try:
-            Prolog().query("halt.")
-        except:
-            pass
-        os._exit(0)
+        exit()
 
     def run(self):
         while self.running:
             self.board.draw(self.screen, self.legal_moves, self.selected)
 
             self.draw_thinking_overlay()
-
+            self.draw_back_button()
             pygame.display.flip()
 
+            prev_turn = self.turn
             # Start AI thread if needed
-            if self.accept_move and self.ai_thread is None:
+            if self.accept_move:
                 if isinstance(self.players[self.turn], AIPlayer):
-                    self.accept_move = False
-                    self.ai_start_time = time.time()
-                    self.ai_thread = threading.Thread(target=self.run_ai_move)
-                    self.ai_thread.start()
-
+                    self.ai_start_time = self.players[self.turn].ai_start_time
+                    self.turn, self.accept_move = self.players[self.turn].make_move()
+                else:
+                    self.ai_start_time = None
+            else:
+                self.ai_start_time = None
             # Handle user events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.running = False
+                    self.shutdown()
 
-                elif event.type == pygame.MOUSEBUTTONDOWN and self.accept_move and isinstance(self.players[self.turn], Player):
-                    pos = pygame.mouse.get_pos()
-                    row, col = self.board.get_square(pos)
-                    player = self.players[self.turn]
-                    self.selected, self.legal_moves, self.turn, self.accept_move = player.handle_click(
-                        self.board, self.selected, row, col, self.turn
-                    )
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 4:  # Scroll up
+                        self.board.scroll_move_log(-1)
+                    elif event.button == 5:  # Scroll down
+                        self.board.scroll_move_log(1)
+                    elif self.back_button.collidepoint(event.pos):
+                        def on_confirm():
+                            self.running = False
+                            self.accept_move = False
+                            self.clean_up()
 
-        self.shutdown()
+                        def on_cancel():
+                            # Just resume game
+                            pass
+                        
+                        def on_save_confirm():
+                            save_history_to_json(self)
+                            self.running = False
+                            self.accept_move = False
+                            self.clean_up()
+
+                        if not self.accept_move:
+                            alert = Alert(self.screen, self.font, "Exit to menu?",
+                                           [("Exit & save", on_save_confirm), ("Exit", on_confirm), ("Cancel", on_cancel)])
+                        else:
+                            alert = Alert(self.screen, self.font, "Exit to menu?",
+                                           [("Exit", on_confirm), ("Cancel", on_cancel)])
+                        alert.show()
+
+                    elif self.accept_move and isinstance(self.players[self.turn], Player):
+                        pos = pygame.mouse.get_pos()
+                        row, col = self.board.get_square(pos)
+                        player = self.players[self.turn]
+                        self.selected, self.legal_moves, self.turn, self.accept_move = player.handle_click(
+                            self.selected, row, col, self.turn
+                        )
+
+            if (prev_turn != self.turn):
+                self.board.reset_move_log_scroll()
+                    
+                    
+
+        return

@@ -43,9 +43,8 @@ log_to_file(_, _).
 evaluate(Board, Color, Score) :-
     piece_bonus(Color, Board, MaterialScore),
     positional_bonus(Color, Board, PositionalScore),
-    opponent_color(Color, OpponentColor),
-    (stalemate(Board, OpponentColor, _, _) -> StalematePenalty = -50 ; StalematePenalty = 0),
-    Score is MaterialScore + PositionalScore + StalematePenalty.
+    % king_safety_bonus(Color, Board, KingSafetyScore),
+    Score is MaterialScore + PositionalScore.
 
 %------------------------
 % Entry point for Minimax
