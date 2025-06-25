@@ -97,15 +97,22 @@ class Game:
             # Handle user events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.running = False
+                    self.shutdown()
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if self.back_button.collidepoint(event.pos):
-                        alert = Alert(self.screen, self.font, "Exit to menu?")
+                        def on_confirm():
+                            self.running = False
+                            self.accept_move = False
+                            self.clean_up()
+
+                        def on_cancel():
+                            # Just resume game
+                            pass
+
+                        alert = Alert(self.screen, self.font, "Exit to menu?", on_ok=on_confirm, on_cancel=on_cancel)
                         alert.show()
-                        self.running = False
-                        self.clean_up()
-                        return
+
                     elif self.accept_move and isinstance(self.players[self.turn], Player):
                         pos = pygame.mouse.get_pos()
                         row, col = self.board.get_square(pos)
@@ -115,4 +122,4 @@ class Game:
                         )
                     
 
-        self.shutdown()
+        return
