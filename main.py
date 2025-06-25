@@ -8,26 +8,34 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "."))
 
 from game.game import Game
 from game.side_selector import SideSelectionScreen
-
+from game.history_viewer import HistoryViewer
+from game.history_selector import HistorySelectionScreen
 WIDTH, HEIGHT = 640, 640
 
 def main():
-    
     pygame.init()
     screen = pygame.display.set_mode((WIDTH + 300, HEIGHT + 20))
     pygame.display.set_caption("Chess with Prolog")
     font = pygame.font.SysFont("arial", 20)
 
+    history_dir = "D:\\UIT\\CPPLT\\Chess-Game\\saved_games"  # your history folder
+
     while True:
-        selector = SideSelectionScreen(screen, font)
-        player_color = selector.get_selection()
+        
+
+
+        # After viewing history, choose side to play new game
+        side_selector = SideSelectionScreen(screen, font)
+        player_color = side_selector.get_selection()
 
         if player_color == "exit":
             break
-
-        game = Game(screen=screen, font=font, player_color=player_color)
-        game.run()
-    
-
+        elif player_color == "history":
+            # Select history file first
+            selector = HistorySelectionScreen(screen, font, history_dir)
+            selector.run()
+        else:
+            game = Game(screen=screen, font=font, player_color=player_color)
+            game.run()
 if __name__ == "__main__":
     main()

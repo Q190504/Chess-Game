@@ -23,3 +23,11 @@ def save_history_to_json(self):
         json.dump(data, f, indent=2)
 
     print(f"Game history saved to: {os.path.abspath(full_path)}")
+
+def parse_history_from_json(json_str):
+    if isinstance(json_str, dict):
+        data = json_str  # Already parsed
+    else:
+        data = json.loads(json_str)
+
+    return data
