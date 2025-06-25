@@ -45,6 +45,8 @@ class Board:
         self.images = self.load_images()
         self.white_in_check = False
         self.black_in_check = False
+        self.lim = 20
+        self.log_start_index = 0
 
     def load_images(self):
         piece_map = {
@@ -119,9 +121,26 @@ class Board:
         line_spacing = 25
 
         log_lines = self.get_move_log_strings()
-        for i, line in enumerate(log_lines[-20:]):  # only show last 20 moves
+        total_lines = len(log_lines)
+
+        # Clamp log_start_index
+        if self.log_start_index < 0:
+            self.log_start_index = 0
+        if self.log_start_index > max(0, total_lines - self.lim):
+            self.log_start_index = max(0, total_lines - self.lim)
+
+        # Slice the move log to show only the window from log_start_index
+        visible_lines = log_lines[self.log_start_index:self.log_start_index + self.lim]
+
+        for i, line in enumerate(visible_lines):
             text_surface = font.render(line, True, (255, 255, 255))
             screen.blit(text_surface, (log_x, log_y + i * line_spacing))
+
+    def scroll_move_log(self, direction):
+        self.log_start_index += direction
+
+    def reset_move_log_scroll(self):
+        self.log_start_index = max(0, len(self.get_move_log_strings()) - self.lim)
 
     def draw(self, screen, legal_moves, selected=None):
         font = pygame.font.SysFont("arial", 16)
