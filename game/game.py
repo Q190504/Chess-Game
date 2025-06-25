@@ -33,10 +33,10 @@ class Game:
         self.running = True
         self.accept_move = True
         self.ai_start_time = None
-
+        self.back_button = pygame.Rect(WIDTH + 50, 20, 100, 30)
     
     def draw_back_button(self):
-        self.back_button = pygame.Rect(WIDTH + 50, 20, 100, 30)
+        
         pygame.draw.rect(self.screen, (200, 100, 100), self.back_button)
         back_text = self.font.render("Back", True, (255, 255, 255))
         self.screen.blit(back_text, (self.back_button.centerx - back_text.get_width() // 2,
@@ -86,6 +86,7 @@ class Game:
             self.draw_back_button()
             pygame.display.flip()
 
+            prev_turn = self.turn
             # Start AI thread if needed
             if self.accept_move:
                 if isinstance(self.players[self.turn], AIPlayer):
@@ -93,14 +94,19 @@ class Game:
                     self.turn, self.accept_move = self.players[self.turn].make_move()
                 else:
                     self.ai_start_time = None
-
+            else:
+                self.ai_start_time = None
             # Handle user events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.shutdown()
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.back_button.collidepoint(event.pos):
+                    if event.button == 4:  # Scroll up
+                        self.board.scroll_move_log(-1)
+                    elif event.button == 5:  # Scroll down
+                        self.board.scroll_move_log(1)
+                    elif self.back_button.collidepoint(event.pos):
                         def on_confirm():
                             if not self.accept_move:
                                 save_history_to_json(self)
@@ -122,6 +128,10 @@ class Game:
                         self.selected, self.legal_moves, self.turn, self.accept_move = player.handle_click(
                             self.selected, row, col, self.turn
                         )
+
+            if (prev_turn != self.turn):
+                self.board.reset_move_log_scroll()
+                    
                     
 
         return
