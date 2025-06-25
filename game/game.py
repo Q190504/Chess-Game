@@ -91,6 +91,8 @@ class Game:
                 if isinstance(self.players[self.turn], AIPlayer):
                     self.ai_start_time = self.players[self.turn].ai_start_time
                     self.turn, self.accept_move = self.players[self.turn].make_move()
+                else:
+                    self.ai_start_time = None
 
             # Handle user events
             for event in pygame.event.get():

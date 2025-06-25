@@ -62,6 +62,7 @@ class Board:
 
     def get_move_log_strings(self):
         log_lines = []
+        end_string = None
         for i in range(0, len(self.history), 2):
             white_move = self.history[i]
             if len(white_move) == 1:
