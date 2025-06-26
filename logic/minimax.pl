@@ -1,18 +1,3 @@
-%------------------------
-% Piece ownership
-%------------------------
-piece_belongs_to_color('P', white).
-piece_belongs_to_color('N', white).
-piece_belongs_to_color('B', white).
-piece_belongs_to_color('R', white).
-piece_belongs_to_color('Q', white).
-piece_belongs_to_color('K', white).
-piece_belongs_to_color('p', black).
-piece_belongs_to_color('n', black).
-piece_belongs_to_color('b', black).
-piece_belongs_to_color('r', black).
-piece_belongs_to_color('q', black).
-piece_belongs_to_color('k', black).
 
 %------------------------
 % Logging
@@ -70,11 +55,6 @@ promo_score('b', 300). promo_score('n', 300).
 move_score(_, _, move(_, _, _, _, Promo, _), Score) :-
     (Promo \= none -> promo_score(Promo, PromoScore) ; PromoScore = 0),
     Score is PromoScore.
-
-find_pieces(Board, Color, Pieces) :-
-    findall((R, C, Piece),
-        (nth0(R, Board, Row), nth0(C, Row, Piece), piece_belongs_to_color(Piece, Color)),
-        Pieces).
 
 generate_all_moves(Board, Color, LastMove, CastleRights, Moves) :-
     find_pieces(Board, Color, MyPieces),
