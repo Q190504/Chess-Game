@@ -52,9 +52,33 @@ promo_score('B', 300). promo_score('N', 300).
 promo_score('q', 900). promo_score('r', 500).
 promo_score('b', 300). promo_score('n', 300).
 
-move_score(_, _, move(_, _, _, _, Promo, _), Score) :-
-    (Promo \= none -> promo_score(Promo, PromoScore) ; PromoScore = 0),
-    Score is PromoScore.
+capture_value('P', 100). capture_value('N', 300).
+capture_value('B', 300). capture_value('R', 500).
+capture_value('Q', 900). capture_value('K', 10000).
+capture_value('p', 100). capture_value('n', 300).
+capture_value('b', 300). capture_value('r', 500).
+capture_value('q', 900). capture_value('k', 10000).
+capture_value(e, 0).
+
+piece_at(Board, Row, Col, Piece) :-
+    nth0(Row, Board, RowList),
+    nth0(Col, RowList, Piece).
+
+move_score(Board, _, move(FromR, FromC, ToR, ToC, Promo, _), Score) :-
+    ( Promo \= none ->
+        promo_score(Promo, PromoScore)
+    ;
+        PromoScore = 0
+    ),
+
+    piece_at(Board, ToR, ToC, Victim),
+    piece_at(Board, FromR, FromC, Attacker),
+
+    (Victim == e -> VictimValue = 0 ; piece_value(Victim, VictimValue)),
+    (Attacker == e -> AttackerValue = 0 ; piece_value(Attacker, AttackerValue)),
+
+    % MVV-LVA score = (VictimValue * 10) - AttackerValue + PromoScore
+    Score is (VictimValue * 10) - AttackerValue + PromoScore.
 
 generate_all_moves(Board, Color, LastMove, CastleRights, Moves) :-
     find_pieces(Board, Color, MyPieces),
