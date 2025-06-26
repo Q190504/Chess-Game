@@ -302,15 +302,12 @@ checkmate(Board, Color, LastMove, CastleRights) :-
 
 % True if there is at least one legal move that is also safe (i.e., doesnt leave king in check)
 has_safe_move(Board, Color, LastMove, CastleRights) :-
-    member(R, [0,1,2,3,4,5,6,7]),
-    member(C, [0,1,2,3,4,5,6,7]),
-    get_piece(Board, R, C, Piece),
-    piece_color(Piece, Color),
+    find_pieces(Board, Color, Pieces),               % Get all piece of the current color
+    member((FromR, FromC, Piece), Pieces), 
     member(ToR, [0,1,2,3,4,5,6,7]),
-    member(ToC, [0,1,2,3,4,5,6,7]),
-    safe_move(Board, Color, R, C, ToR, ToC, LastMove, CastleRights),
+    member(ToC, [0,1,2,3,4,5,6,7]),                    % Check all the legal moves
+    safe_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, CastleRights),  % Check if it safe
     !.  % Cut: we only need one
-
 
 % ------------------------------
 % Stalemate Logic
