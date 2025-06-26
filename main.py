@@ -17,8 +17,8 @@ def main():
     screen = pygame.display.set_mode((WIDTH + 300, HEIGHT + 20))
     pygame.display.set_caption("Chess with Prolog")
     font = pygame.font.SysFont("arial", 20)
-
-    history_dir = "D:\\UIT\\CPPLT\\Chess-Game\\saved_games"  # your history folder
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    history_dir = os.path.abspath(os.path.join(root_dir, "saved_games"))
 
     while True:
         
