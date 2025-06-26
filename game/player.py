@@ -1,5 +1,5 @@
 from logic.prolog_interface import get_legal_moves, move_piece, is_checkmate, is_stalemate, get_board_hash
-
+from utils.utils import most_frequent
 class Player:
     def __init__(self, color, board, promotion_callback=None):
         self.color = color
@@ -70,6 +70,7 @@ class Player:
                     self.write_history(promotion=promotion, special=special)
                     print(f"Player moved {self.board.grid[row][col]} from {selected} to ({row}, {col})")
 
+                    (freq, count) = most_frequent(self.board.state_history)
                     if is_checkmate(self.board.grid, new_turn, self.board.last_move, self.board.rights):
                         print(f"Checkmate! {turn.capitalize()} wins.")
                         self.board.history.append([f"Checkmate! {self.color.capitalize()} wins."])
@@ -78,7 +79,10 @@ class Player:
                         print("Stalemate! It's a draw.")
                         self.board.history.append(["Stalemate! It's a draw."])
                         return None, [], new_turn, False
-
+                    elif count >= 3:
+                        print(f"Stalemate! It's a 3-fold rep. {freq}")
+                        self.board.history.append(["Stalemate! It's a 3-fold rep."])
+                        return None, [], new_turn, False
                     return None, [], new_turn, True
                 return None, [], turn, True
 

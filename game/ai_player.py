@@ -1,7 +1,7 @@
 from logic.prolog_interface import get_minimax_move, move_piece, is_checkmate, is_stalemate, get_board_hash
 import time
 import multiprocessing
-
+from utils.utils import most_frequent
 class AIMinimaxProcess:
     def __init__(self, board, color, depth, last_move, rights, state_history):
         self.queue = multiprocessing.Queue()
@@ -130,6 +130,8 @@ class AIPlayer:
                 self.board.update_check_status()
                 self.write_history(promotion=promotion, special=special)
 
+                (freq, count) = most_frequent(self.board.state_history)
+
                 if is_checkmate(self.board.grid, new_turn, self.board.last_move, self.board.rights):
                     print(f"Checkmate! {self.color.capitalize()} wins.")
                     self.board.history.append([f"Checkmate! {self.color.capitalize()} wins."])
@@ -138,7 +140,10 @@ class AIPlayer:
                     print("Stalemate! It's a draw.")
                     self.board.history.append(["Stalemate! It's a draw."])
                     return new_turn, False
-
+                elif count >= 3:
+                        print(f"Stalemate! It's a 3-fold rep. {freq}")
+                        self.board.history.append(["Stalemate! It's a 3-fold rep."])
+                        return new_turn, False
                 return new_turn, True
             else:
                 print("AI move failed.")

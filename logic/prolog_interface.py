@@ -63,7 +63,6 @@ def is_checkmate(board, turn, last_move=None, castle_rights=None):
     q.close()
     return bool(result)
 
-
 def is_stalemate(board, turn, last_move=None, castle_rights=None):
     board_str = python_board_to_prolog(board)
     move_term = get_move_term(last_move)
