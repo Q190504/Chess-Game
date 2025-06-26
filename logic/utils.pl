@@ -30,6 +30,26 @@ exist_sqr(Row, Col) :-
 opponent(white, P) :- is_black(P).
 opponent(black, P) :- is_white(P).
 
+% Piece ownership
+piece_belongs_to_color('P', white).
+piece_belongs_to_color('N', white).
+piece_belongs_to_color('B', white).
+piece_belongs_to_color('R', white).
+piece_belongs_to_color('Q', white).
+piece_belongs_to_color('K', white).
+piece_belongs_to_color('p', black).
+piece_belongs_to_color('n', black).
+piece_belongs_to_color('b', black).
+piece_belongs_to_color('r', black).
+piece_belongs_to_color('q', black).
+piece_belongs_to_color('k', black).
+
+% Get all pieces of a color
+find_pieces(Board, Color, Pieces) :-
+    findall((R, C, Piece),
+        (nth0(R, Board, Row), nth0(C, Row, Piece), piece_belongs_to_color(Piece, Color)),
+        Pieces).
+
 % Sliding Logic (shared by rook/bishop/queen)
 % Slide in a direction (Dr, Dc) until hitting a piece or going out of bounds
 % If the square is empty, keep sliding. If it hits an opponent piece, capture it then stop. If it hits a friendly piece, stop.
@@ -254,17 +274,13 @@ find_king_in_rows([_|RestRows], Symbol, CurrentRowNum, RowNum, ColNum) :-
 % Check if opponent can move there
 under_attack(Board, Color, TargetRow, TargetCol) :-
     opponent_color(Color, OppColor),
-    between(0, 7, Row),
-    between(0, 7, Col),
-    nth0(Row, Board, BoardRow),
-    nth0(Col, BoardRow, Piece),
-    Piece \= e,
+    find_pieces(Board, OppColor, Pieces),
+    member((Row, Col, Piece), Pieces),
     piece_color(Piece, OppColor),
     % format('Trying move from (~w,~w) ~w to king at (~w,~w)~n', [Row, Col, Piece, TargetRow, TargetCol]),
     legal_move(Board, OppColor, Row, Col, TargetRow, TargetCol, _, _),
     % format('LEGAL move from ~w at (~w,~w) to (~w,~w)~n', [Piece, Row, Col, TargetRow, TargetCol]),
     !.
-
 
 % Define opponent color
 opponent_color(white, black).
@@ -286,15 +302,12 @@ checkmate(Board, Color, LastMove, CastleRights) :-
 
 % True if there is at least one legal move that is also safe (i.e., doesnt leave king in check)
 has_safe_move(Board, Color, LastMove, CastleRights) :-
-    member(R, [0,1,2,3,4,5,6,7]),
-    member(C, [0,1,2,3,4,5,6,7]),
-    get_piece(Board, R, C, Piece),
-    piece_color(Piece, Color),
+    find_pieces(Board, Color, Pieces),               % Get all piece of the current color
+    member((FromR, FromC, _Piece), Pieces), 
     member(ToR, [0,1,2,3,4,5,6,7]),
-    member(ToC, [0,1,2,3,4,5,6,7]),
-    safe_move(Board, Color, R, C, ToR, ToC, LastMove, CastleRights),
+    member(ToC, [0,1,2,3,4,5,6,7]),                    % Check all the legal moves
+    safe_move(Board, Color, FromR, FromC, ToR, ToC, LastMove, CastleRights),  % Check if it safe
     !.  % Cut: we only need one
-
 
 % ------------------------------
 % Stalemate Logic

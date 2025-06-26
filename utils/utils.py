@@ -2,6 +2,23 @@ import json
 import datetime
 import os
 
+def most_frequent(lst):
+    freq = {}
+    max_count = 0
+    most_common = None
+
+    for item in lst:
+        if item in freq:
+            freq[item] += 1
+        else:
+            freq[item] = 1
+
+        if freq[item] > max_count:
+            max_count = freq[item]
+            most_common = item
+
+    return most_common, max_count
+
 def save_history_to_json(self):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"game_{timestamp}.json"
